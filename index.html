@@ -5,7 +5,6 @@
 <title>Dice</title>
 <link rel="icon" type="image/svg" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.png" sizes="192x192">
-<script src="manifest.js"></script>
 <style>
 body {
 	font-family: Courier, monospace, sans-serif;
@@ -48,11 +47,11 @@ a {
 	justify-content: flex-end; -webkit-justify-content: flex-end;
 	align-items: center; -webkit-align-items: center;
 }
-#version {
+.author,.version {
 	font-size: 12px;
 	opacity: 0.1;
 }
-#logo {
+.logo {
 	width: 160px; height: 60px; margin: 0px 16px;
 	display: flex; display: -webkit-flex;
 	flex-direction: row; -webkit-flex-direction: row;
@@ -60,10 +59,13 @@ a {
 	align-items: center; -webkit-align-items: center;
 	font-size: 24px;
 }
-#logo .icon {
-    width: 40px; height: 40px; padding: 10px; margin-left: -28px;
+.logo .icon {
+	width: 40px; height: 40px; padding: 10px; margin-left: -28px;
 }
-#menu {
+.logo .title {
+	user-select: none;
+}
+.menu {
 	width: 120px; height: 40px;
 	display: flex; display: -webkit-flex;
 	flex-direction: row; -webkit-flex-direction: row;
@@ -71,7 +73,7 @@ a {
 	align-items: center; -webkit-align-items: center;
 	opacity: 0.9;
 }
-#menu a {
+.menu a {
 	width: 40px; height: 40px;
 	display: flex; display: -webkit-flex;
 	flex-direction: column; -webkit-flex-direction: column;
@@ -83,33 +85,33 @@ a {
 	transform: scale(1);
 	opacity: 1;
 }
-#menu a:hover {
+.menu a:hover {
 	transform: scale(1);
 	opacity: 0.6;
 }
-#menu a:active {
+.menu a:active {
 	transform: scale(0.9);
 	opacity: 1;
 }
-#icon {
+.menu a #icon {
 	width: 40px; height: 40px;
 	background-image: url('resource.svg');
 }
 @media (max-height: 479px) {
-	#logo {
+	.logo {
 		height: 20px;
 		font-size: 18px;
 	}
-	#menu {
+	.menu {
 		height: 20px;
 	}
-	#menu a {
+	.menu a {
 		font-size: 20px;
 	}
-	#menu a #icon {
+	.menu a #icon {
 		transform: scale(0.4);
 	}
-	#version {
+	.author,.version {
 		height: 10px;
 		font-size: 8px;
 	}
@@ -119,11 +121,11 @@ a {
 <body>
 <div id="container">
 	<h1 id="header">
-		<div id="logo">
-			<!--img class="icon" src="icon.svg"!-->
-			<a href="?" id="title">Dice</a>
+		<div class="logo">
+			<!--img class="icon" src="icon.svg"/!-->
+			<a class="title">Dice</a>
 		</div>
-		<div id="menu">
+		<div class="menu">
 			<a href="javascript:changeCounts(-1);">-</a>
 			<a href="javascript:changeMaximum();"><span id="icon"></span></a>
 			<a href="javascript:changeCounts(+1);">+</a>
@@ -131,19 +133,14 @@ a {
 	</h1>
 	<div id="contents" class="cubeScreen"></div>
 	<h6 id="footer">
-		<div id="version">.</div>
+		<div class="author">.</div>
+		<div class="version">.</div>
 	</h6>
 </div>
+<script>console.log = () => {};</script>
+<script src="manifest.js"></script>
 <script src="cube-api-0.8.js"></script>
 <!--Menu--><script>
-	console.log = () => {};
-	document.getElementById("version").innerText = manifest.version.substr(-4);
-
-	// Title logo.
-	var title = document.getElementById("title");
-	if (title) {
-		title.href = window.location.search;
-	}
 
 	// Get query parameters.
 	var params = cubeParamNumbers(0, "d");
