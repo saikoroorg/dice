@@ -5,13 +5,14 @@
 <title>Dice</title>
 <link rel="icon" type="image/svg" href="icon.svg">
 <link rel="apple-touch-icon" href="icon.png" sizes="192x192">
+<link rel="manifest" href="manifest.json">
 <style>
 body {
 	font-family: Courier, monospace, sans-serif;
 	background-color: #fff;
 }
 a {
-	color: #000;
+	color: #ccc;
 	text-decoration: none;
 }
 #container {
@@ -46,10 +47,8 @@ a {
 	flex-direction: row; -webkit-flex-direction: row;
 	justify-content: flex-end; -webkit-justify-content: flex-end;
 	align-items: center; -webkit-align-items: center;
-}
-.author,.version {
 	font-size: 12px;
-	opacity: 0.1;
+	color: #eee;
 }
 .logo {
 	width: 160px; height: 60px; margin: 0px 16px;
@@ -57,31 +56,54 @@ a {
 	flex-direction: row; -webkit-flex-direction: row;
 	justify-content: flex-start; -webkit-justify-content: flex-start;
 	align-items: center; -webkit-align-items: center;
-	font-size: 24px;
 }
 .logo .icon {
 	width: 40px; height: 40px; padding: 10px; margin-left: -28px;
 }
 .logo .title {
-	user-select: none;
+	font-size: 24px;
+	color: #000;
 }
 .menu {
-	width: 120px; height: 40px;
+	width: 80px; height: 40px;
 	display: flex; display: -webkit-flex;
 	flex-direction: row; -webkit-flex-direction: row;
-	justify-content: center; -webkit-justify-content: center;
-	align-items: center; -webkit-align-items: center;
-	opacity: 0.9;
+	justify-content: space-between; -webkit-justify-content: space-between;
+	align-items: flex-end; -webkit-align-items: flex-end;
 }
-.menu a {
-	width: 40px; height: 40px;
+.menu .item {
+	width: 40px; height: 40px; margin: 0px;
 	display: flex; display: -webkit-flex;
 	flex-direction: column; -webkit-flex-direction: column;
 	justify-content: center; -webkit-justify-content: center;
 	align-items: center; -webkit-align-items: center;
-	color: #000;
-	font-size: 30px;
-	text-decoration: none;
+	font-size: 16px;
+}
+.menu .subitem {
+	width: 40px; height: 20px; margin-left: -40px;
+	display: flex; display: -webkit-flex;
+	flex-direction: column; -webkit-flex-direction: column;
+	justify-content: center; -webkit-justify-content: center;
+	align-items: center; -webkit-align-items: center;
+	font-size: 10px;
+}
+.menu .item.dark {
+	background-color: #000;
+	color: #fff;
+}
+.menu .subitem.dark {
+	background-color: none;
+	color: #ccc;
+}
+.menu .light {;
+	background-color: #ccc;
+	color: #fff;
+}
+.menu .subitem.light {
+	background-color: none;
+	color: #fff;
+}
+.menu a {
 	transform: scale(1);
 	opacity: 1;
 }
@@ -93,27 +115,11 @@ a {
 	transform: scale(0.9);
 	opacity: 1;
 }
-.menu a #icon {
-	width: 40px; height: 40px;
-	background-image: url('resource.svg');
-}
-@media (max-height: 479px) {
-	.logo {
-		height: 20px;
-		font-size: 18px;
-	}
-	.menu {
-		height: 20px;
-	}
-	.menu a {
-		font-size: 20px;
-	}
-	.menu a #icon {
-		transform: scale(0.4);
-	}
-	.author,.version {
-		height: 10px;
-		font-size: 8px;
+@media (min-width: 600px) {
+	#contents {
+		flex-direction: row; -webkit-flex-direction: row;
+		justify-content: center; -webkit-justify-content: center;
+		align-items: center; -webkit-align-items: center;
 	}
 }
 </style>
@@ -123,36 +129,41 @@ a {
 	<h1 id="header">
 		<div class="logo">
 			<!--img class="icon" src="icon.svg"/!-->
-			<a class="title">Dice</a>
+			<a class="title" href="?">Dice</a>
 		</div>
 		<div class="menu">
-			<a href="javascript:changeCounts(-1);">-</a>
-			<a href="javascript:changeMaximum();"><span id="icon"></span></a>
-			<a href="javascript:changeCounts(+1);">+</a>
+			<a class="item" id="countLabel" href="javascript:changeCount(1);">x1</a>
+			<a class="subitem" href="javascript:changeCount(-1);">-</a>
+			<a class="item" id="imageLabel" href="javascript:changeMaximum();"></a>
 		</div>
 	</h1>
 	<div id="contents" class="cubeScreen"></div>
 	<h6 id="footer">
-		<div class="author">.</div>
-		<div class="version">.</div>
+		<div class="author"><!--$author--></div>
+		<div class="version"><!--$version--></div>
+		.
 	</h6>
 </div>
 <script>console.log = () => {};</script>
-<script src="manifest.js"></script>
+<script src="background.js"></script>
 <script src="cube-api-0.8.js"></script>
 <!--Menu--><script>
-
-	// Get query parameters.
-	var params = cubeParamNumbers(0, "d");
-	var counts = params[0] > 0 ? params[0] : 1; // Counts of dice.
-	var maximum = params[1] > 0 ? params[1] : 6; // Maximum of dice faces.
+	var count = 1; // Count of dice.
+	var maximum = 6; // Maximum of dice faces.
 	var buffer = null; // Original icon buffer.
 	var original = 0; // Original frame.
 	var rolling = 0; // Rolling count.
 
-	// Set counts of dice.
-	var setCounts = (x) => {
-		counts = (x > 20) ? 20 : (x < 1) ? 1 : x;
+	// Set count of dice.
+	var setCount = (x) => {
+		count = (x > 20) ? 20 : (x < 1) ? 1 : x;
+
+		// Reset dice information.
+		let e = document.getElementById("countLabel");
+		if (e) {
+			e.innerHTML = "x" + count;
+		}
+
 		rolling = -1; // Reroll.
 	};
 
@@ -163,43 +174,49 @@ a {
 		}
 
 		// Reset dice icon.
-		var icon = document.getElementById("icon");
-		if (icon) {
+		let e = document.getElementById("imageLabel");
+		if (e) {
 			if (!buffer) {
-				var n = maximum <= 2 || maximum >= 10 ? maximum + 10 : maximum;
-				var nx = -cubeMod(n - 1, 5) * 40;
-				var ny = -cubeDiv(n - 1, 5) * 40;
-				icon.style.backgroundPosition = "" + nx + " " + ny;
+				let n = maximum <= 2 || maximum >= 10 ? maximum + 10 : maximum;
+				let nx = -cubeMod(n - 1, 5) * 40;
+				let ny = -cubeDiv(n - 1, 5) * 40;
+				e.style.backgroundImage = "url(\"image.svg\")";
+				e.style.backgroundPosition = "" + nx + " " + ny;
 			} else {
-				icon.style.backgroundImage = "url(\"" + buffer.toImage() + "\")";
 				original = original + 1 <= maximum ? original + 1 : 1;
-				var nx = -cubeMod(original - 1, maximum) * 40;
-				var ny = -cubeDiv(original - 1, maximum) * 40;
-				icon.style.backgroundPosition = "" + nx + " " + ny;
+				let nx = -cubeMod(original - 1, maximum) * 40;
+				let ny = -cubeDiv(original - 1, maximum) * 40;
+				e.style.backgroundImage = "url(\"" + buffer.toImage() + "\")";
+				e.style.backgroundPosition = "" + nx + " " + ny;
 			}
 		}
+
 		rolling = -1; // Reroll.
 	};
 
-	var changeCounts = (x) => {
-		setCounts(counts + x);
+	// Change count of dice.
+	var changeCount = (x) => {
+		setCount(count + x);
 	};
+
+	// Change maximum of dice faces.
 	var changeMaximum = () => {
 		setMaximum(maximum == 6 ? 10 : maximum == 10 ? 2 : 6);
 	};
 
-	// Initialize settings.
-	setCounts(counts);
-	setMaximum(maximum);
+	// Get query parameters.
+	var params = cubeParamNumbers(0, "d");
+	setCount(params[0] > 0 ? params[0] : 1);
+	setMaximum(params[1] > 0 ? params[1] : 6);
 
 </script><!--/Menu-->
-<!--Resource--><script>
+<!--Design--><script>
 
 	// Initialize face designs.
 	var keys = cubeParamKeys();
 	var designs = [];
 	for (let j = 1; j < keys.length; j++) {
-		var param1 = cubeParamData(j);
+		let param1 = cubeParamData(j);
 		let design = [];
 		for (let i = 0; i < param1.length / 3; i++) {
 			let x = param1[i * 3 + 1], y = param1[i * 3 + 2];
@@ -215,8 +232,8 @@ a {
 	// Create pixel buffer for face design.
 	if (designs.length > 0) {
 		buffer = cubeBuffer(9, 9, 40/9, designs.length);
-		var rects = [[0,0,8,8, 255,255,255]];
-		var lines = [[0,0,8,0],[8,0,8,8],[8,8,0,8],[0,8,0,0]];
+		let rects = [[0,0,8,8, 255,255,255]];
+		let lines = [[0,0,8,0],[8,0,8,8],[8,8,0,8],[0,8,0,0]];
 		for (let i = 0; i < designs.length; i++) {
 			cubeBufferRects(rects, i, buffer);
 			cubeBufferLines(lines, i, buffer);
@@ -225,9 +242,9 @@ a {
 		setMaximum(designs.length);
 	}
 
-</script><!--/Resource-->
+</script><!--/Design-->
 <!--Main--><script>(async()=>{
-	//var counts = 1; // Counts of dice.
+	//var count = 1; // Count of dice.
 	//var maximum = 6; // Maximum of dice faces.
 	//var rolling = 0; // Rolling count.
 
@@ -235,7 +252,7 @@ a {
 	cubeResizeScreen(300, 240);
 
 	// Create sprites.
-	var sprite = await cubeSprite("resource.svg", 40, 40);
+	var sprite = await cubeSprite("image.svg", 40, 40);
 	cubeDilute(0.1, sprite);
 	cubeExpand(0.5, sprite);
 	var sprites = [];
@@ -243,7 +260,7 @@ a {
 		if (buffer) {
 			sprites[i] = await cubeBufferSprite(buffer);
 		} else {
-			sprites[i] = await cubeSprite("resource.svg", 40, 40);
+			sprites[i] = await cubeSprite("image.svg", 40, 40);
 		}
 	}
 
@@ -252,27 +269,27 @@ a {
 	while (true) {
 
 		// Sprite lines and rows.
-		var lineMax = cubeSqrt(counts - 1) + 1;
-		var lines = cubeDiv(counts - 1, lineMax) + 1;
-		var rows = [];
-		for (var i = 0; i < lines; i++) {
-			rows[i] = i > 0 ? lineMax : (cubeMod(counts - 1, lineMax) + 1);
+		let lineMax = cubeSqrt(count - 1) + 1;
+		let lines = cubeDiv(count - 1, lineMax) + 1;
+		let rows = [];
+		for (let i = 0; i < lines; i++) {
+			rows[i] = i > 0 ? lineMax : (cubeMod(count - 1, lineMax) + 1);
 		}
 
 		// Sprite frame.
-		var frameMax = maximum;
+		let frameMax = maximum;
 
 		// Sprite scale.
-		var scale = 5 / ((counts < lineMax ? counts : lines >= lineMax ? lines : lineMax) + 1);
+		let scale = 5 / ((count < lineMax ? count : lines >= lineMax ? lines : lineMax) + 1);
 
 		// Rolling dice.
-		var angle = 0;
-		var result = 0;
-		var randoms = [];
+		let angle = 0;
+		let result = 0;
+		let randoms = [];
 		for (rolling = 1; rolling >= 1; rolling++) {
 
 			// Screen size.
-			var size = cubeScreenSize();
+			let size = cubeScreenSize();
 
 			// Wait for input.
 			await cubeReadJoypad(0);
@@ -293,8 +310,8 @@ a {
 
 				// Timeout and show result.
 				} else if (rolling > 60) {
-					for (var y = 0; y < lines; y++) {
-						for (var x = 0; x < rows[y]; x++) {
+					for (let y = 0; y < lines; y++) {
+						for (let x = 0; x < rows[y]; x++) {
 							result += randoms[lineMax*y+x];
 						}
 					}
@@ -307,8 +324,8 @@ a {
 			// Roll sprites.
 			if (result <= 0) {
 				angle = cubeMod(angle + 20, 360);
-				for (var y = 0; y < lines; y++) {
-					for (var x = 0; x < rows[y]; x++) {
+				for (let y = 0; y < lines; y++) {
+					for (let x = 0; x < rows[y]; x++) {
 						if (frameMax <= 2) {
 							randoms[lineMax*y+x] = cubeRandom(frameMax) > 0 ? 11 : 10;
 						} else if (frameMax < 10) {
@@ -321,21 +338,21 @@ a {
 			}
 
 			// Update number sprite.
-			var n = result <= 0 ? number : number - 1;
-			var mx = size.x * 0.8, my = size.y * 1;
-			var ox = (size.x - mx) * 0.5, oy = (size.y - my) * 0.5;
+			let n = result <= 0 ? number : number - 1;
+			let mx = size.x * 0.8, my = size.y * 1;
+			let ox = (size.x - mx) * 0.5, oy = (size.y - my) * 0.5;
 			cubeAnimate(n > 0 ? cubeMod(n - 1, 20) + 10 : 9, sprite);
 			cubeMove(ox + mx / 2, 16, sprite);
 
 			// Update sprites.
-			var s = rolling < 5 ? scale * (0.8 + 0.04 * rolling) : scale;
-			for (var y = 0; y < lines; y++) {
-				for (var x = 0; x < rows[y]; x++) {
+			let s = rolling < 5 ? scale * (0.8 + 0.04 * rolling) : scale;
+			for (let y = 0; y < lines; y++) {
+				for (let x = 0; x < rows[y]; x++) {
 					cubeAnimate(randoms[lineMax*y+x] - 1, sprites[lineMax*y+x]);
 					cubeExpand(s, sprites[lineMax*y+x]);
 					cubeRotate(angle, sprites[lineMax*y+x]);
-					var sx = ox + mx * (x + 1) / (rows[y] + 1);
-					var sy = oy + my * (y + 1) / (lines + 1);
+					let sx = ox + mx * (x + 1) / (rows[y] + 1);
+					let sy = oy + my * (y + 1) / (lines + 1);
 					cubeMove(sx, sy, sprites[lineMax*y+x]);
 				}
 			}
@@ -345,8 +362,8 @@ a {
 
 			// Draw sprites.
 			cubeDraw(sprite);
-			for (var y = 0; y < lines; y++) {
-				for (var x = 0; x < rows[y]; x++) {
+			for (let y = 0; y < lines; y++) {
+				for (let x = 0; x < rows[y]; x++) {
 					cubeDraw(sprites[lineMax*y+x]);
 				}
 			}

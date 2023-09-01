@@ -4,10 +4,10 @@
 		<path d="M3,3h2v2h-2ZM11,3h2v2h-2ZM3,7h2v2h-2ZM11,7h2v2h-2ZM3,11h2v2h-2ZM11,11h2v2h-2Z"/>
 	</g>
 </svg>
-<!-- qlmanage -t -s 192 -o ./ icon.svg -->
-<!--svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 30" width="300" height="300">
-	<path d="M0,0h30v30h-30Z" fill="#000"/>
-	<g stroke-width="2" stroke="none" fill="#000" transform="translate(7,7)">
+<!-- qlmanage -t -s 192 -o ./ icon.svg -or- inkscape -z -o icon.png -w 192 -h 192 icon.svg -->
+<!--svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="384" height="384">
+	<path d="M0,0h32v32h-32Z" fill="#fff"/>
+	<g stroke-width="2" stroke="none" fill="#000" transform="translate(8,8)">
 		<path d="M0,0h16v16h-16Z" stroke="#000" fill="#fff"/>
 		<path d="M3,3h2v2h-2ZM11,3h2v2h-2ZM3,7h2v2h-2ZM11,7h2v2h-2ZM3,11h2v2h-2ZM11,11h2v2h-2Z"/>
 	</g>
