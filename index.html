@@ -139,14 +139,14 @@ a {
 	</h1>
 	<div id="contents" class="cubeScreen"></div>
 	<h6 id="footer">
-		<div class="author"><!--$author--></div>
-		<div class="version"><!--$version--></div>
-		.
+		<div class="author"></div>/
+		<div class="version"></div>
 	</h6>
 </div>
-<script>console.log = () => {};</script>
+<!--script>console.log = () => {};</script!-->
 <script src="background.js"></script>
 <script src="cube-api-0.8.js"></script>
+<script src="sound.js"></script>
 <!--Menu--><script>
 	var count = 1; // Count of dice.
 	var maximum = 6; // Maximum of dice faces.
@@ -196,12 +196,30 @@ a {
 
 	// Change count of dice.
 	var changeCount = (x) => {
-		setCount(count + x);
+		if (count + x >= 1 && count + x <= 20) {
+			setCount(count + x);
+
+			// High beep on press button.
+			picoBeep(1.2, 0.1);
+		} else {
+
+			// Low beep on press locked button.
+			picoBeep(-1.2, 0.1);
+		}
 	};
 
 	// Change maximum of dice faces.
 	var changeMaximum = () => {
-		setMaximum(maximum == 6 ? 10 : maximum == 10 ? 2 : 6);
+		if (!buffer) {
+			setMaximum(maximum == 6 ? 10 : maximum == 10 ? 2 : 6);
+
+			// High beep on press button.
+			picoBeep(1.2, 0.1);
+		} else {
+
+			// Low beep on press locked button.
+			picoBeep(-1.2, 0.1);
+		}
 	};
 
 	// Get query parameters.
@@ -271,16 +289,26 @@ a {
 		// Sprite lines and rows.
 		let lineMax = cubeSqrt(count - 1) + 1;
 		let lines = cubeDiv(count - 1, lineMax) + 1;
-		let rows = [];
-		for (let i = 0; i < lines; i++) {
-			rows[i] = i > 0 ? lineMax : (cubeMod(count - 1, lineMax) + 1);
+		let lineMod = cubeMod(count - 1, lineMax) + 1;
+		console.log("" + count + " -> " + lineMax + " " + lines + " " + lineMod);
+		let poses = [];
+		for (let i = 0; i < count; i++) {
+			let x = cubeMod(i, lineMax) + 1, y = cubeDiv(i, lineMax) + 1;
+			if (y < lines) {
+				poses[i] = cubeVector(x / (lineMax + 1), (lines + 1 - y) / (lines + 1));
+			} else {
+				poses[i] = cubeVector(x / (lineMod + 1), (lines + 1 - y) / (lines + 1));
+			}
+			console.log("" + x + "," + y + " -> " + poses[i].toString());
 		}
-
 		// Sprite frame.
 		let frameMax = maximum;
 
 		// Sprite scale.
 		let scale = 5 / ((count < lineMax ? count : lines >= lineMax ? lines : lineMax) + 1);
+
+		// Play rolling melody on starting.
+		//picoPlay([1.2, 100], 0.1);
 
 		// Rolling dice.
 		let angle = 0;
@@ -292,14 +320,14 @@ a {
 			let size = cubeScreenSize();
 
 			// Wait for input.
-			await cubeReadJoypad(0);
+			await cubeReadJoypad();
 			if (result > 0) {
 
 				// Restart to roll dice.
 				if (cubeJoypadMotion()) {
 					if (rolling > 10) {
 						result = 0;
-						rolling = 0;
+						rolling = -1;
 					}
 				}
 			} else {
@@ -310,29 +338,37 @@ a {
 
 				// Timeout and show result.
 				} else if (rolling > 60) {
-					for (let y = 0; y < lines; y++) {
-						for (let x = 0; x < rows[y]; x++) {
-							result += randoms[lineMax*y+x];
-						}
+					for (let i = 0; i < count; i++) {
+						result += randoms[i];
 					}
 					angle = 0;
 					rolling = 1;
 					number++;
+
+					// Stop melody.
+					picoStop();
+
+					// Number matched beeps on show result.
+					const kcents = [-0.9,-0.7,-0.5,-0.4,-0.2,0,0.2];
+					const timing = count <= 5 ? 0.2 : 1/count;
+					for (let i = 0; i < count; i++) {
+						let j = randoms[i] < kcents.length ? randoms[i] - 1 :
+							randoms[i] - 10 < kcents.length ? randoms[i] - 11 : kcents.length - 1;
+						picoBeep(kcents[j], timing/2, timing * i);
+					}
 				}
 			}
 
 			// Roll sprites.
 			if (result <= 0) {
 				angle = cubeMod(angle + 20, 360);
-				for (let y = 0; y < lines; y++) {
-					for (let x = 0; x < rows[y]; x++) {
-						if (frameMax <= 2) {
-							randoms[lineMax*y+x] = cubeRandom(frameMax) > 0 ? 11 : 10;
-						} else if (frameMax < 10) {
-							randoms[lineMax*y+x] = cubeRandom(frameMax) + 1;
-						} else {
-							randoms[lineMax*y+x] = cubeMod(cubeRandom(frameMax), 20) + 10;
-						}
+				for (let i = 0; i < count; i++) {
+					if (frameMax <= 2) {
+						randoms[i] = cubeRandom(frameMax) > 0 ? 11 : 10;
+					} else if (frameMax < 10) {
+						randoms[i] = cubeRandom(frameMax) + 1;
+					} else {
+						randoms[i] = cubeMod(cubeRandom(frameMax), 20) + 10;
 					}
 				}
 			}
@@ -346,15 +382,13 @@ a {
 
 			// Update sprites.
 			let s = rolling < 5 ? scale * (0.8 + 0.04 * rolling) : scale;
-			for (let y = 0; y < lines; y++) {
-				for (let x = 0; x < rows[y]; x++) {
-					cubeAnimate(randoms[lineMax*y+x] - 1, sprites[lineMax*y+x]);
-					cubeExpand(s, sprites[lineMax*y+x]);
-					cubeRotate(angle, sprites[lineMax*y+x]);
-					let sx = ox + mx * (x + 1) / (rows[y] + 1);
-					let sy = oy + my * (y + 1) / (lines + 1);
-					cubeMove(sx, sy, sprites[lineMax*y+x]);
-				}
+			for (let i = 0; i < count; i++) {
+				cubeAnimate(randoms[i] - 1, sprites[i]);
+				cubeExpand(s, sprites[i]);
+				cubeRotate(angle, sprites[i]);
+				let sx = ox + mx * poses[i].x;
+				let sy = oy + my * poses[i].y;
+				cubeMove(sx, sy, sprites[i]);
 			}
 
 			// Clear screen.
@@ -362,10 +396,8 @@ a {
 
 			// Draw sprites.
 			cubeDraw(sprite);
-			for (let y = 0; y < lines; y++) {
-				for (let x = 0; x < rows[y]; x++) {
-					cubeDraw(sprites[lineMax*y+x]);
-				}
+			for (let i = 0; i < count; i++) {
+				cubeDraw(sprites[i]);
 			}
 
 			await cubeWait(10);
