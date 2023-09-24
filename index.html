@@ -349,11 +349,14 @@ a {
 					picoStop();
 
 					// Number matched beeps on show result.
-					const kcents = [-0.9,-0.7,-0.5,-0.4,-0.2,0,0.2];
-					const timing = count <= 5 ? 0.2 : 1/count;
+					const kcents = [-1.0,
+						-0.9,-0.7,-0.5, -0.4,-0.2, 0.0, 0.2, // 1:Do,2:Re,3:Mi, 4:Fa,5:So,6:La,7:Ti
+						 0.3, 0.5, 0.7,  0.8, 1.0, 1.2, 1.4,
+						 1.5, 1.7, 1.9,  2.0, 2.2];
+					const timing = count <= 2 ? 0.2 : 0.5/count;
 					for (let i = 0; i < count; i++) {
-						let j = randoms[i] < kcents.length ? randoms[i] - 1 :
-							randoms[i] - 10 < kcents.length ? randoms[i] - 11 : kcents.length - 1;
+						let k = randoms[i] < 10 ? randoms[i] : randoms[i] - 10;
+						let j = k >= 0 && k < kcents.length ? k : 0;
 						picoBeep(kcents[j], timing/2, timing * i);
 					}
 				}
