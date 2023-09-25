@@ -39,8 +39,6 @@ async function picoNoise(kcent=0, length=0.1, freq=0) {
 
 // Namespace.
 var pico = pico || {};
-pico.version = "0.2";
-pico.timestamp = "30922a";
 
 // Sound class.
 pico.Sound = class {
