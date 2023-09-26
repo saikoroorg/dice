@@ -21,18 +21,21 @@ async function picoStop() {
 }
 
 // Play pulse sound.
-async function picoPulse(kcent=0, length=0.1, dutyCycle=0.5) {
-	await pico.sound2A03.playPulse(kcent, length, dutyCycle);
+// Original parameter: pattern=0.125,0.25,0.5
+async function picoPulse(kcent=0, length=0.1, pattern=0) {
+	await pico.sound8bit.playPulse(kcent, length, pattern);
 }
 
 // Play triangle sound.
-async function picoTriangle(kcent=0, length=0.1, freq=0) {
-	await pico.sound2A03.playTriangle(kcent, length, freq);
+// Original parameter: pattern=16
+async function picoTriangle(kcent=0, length=0.1, pattern=0) {
+	await pico.sound8bit.playTriangle(kcent, length, pattern);
 }
 
 // Play noise sound.
-async function picoNoise(kcent=0, length=0.1, freq=0) {
-	await pico.sound2A03.playNoise(kcent, length, freq);
+// Original parameter: pattern=1,6
+async function picoNoise(length=0.1, pattern=0) {
+	await pico.sound8bit.playNoise(length, pattern);
 }
 
 //************************************************************/
@@ -161,8 +164,10 @@ pico.Sound = class {
 				// Wait to end.
 				setTimeout(() => {
 					console.log("End: " + kcent + " x " + length);
-					this.master.gain.value = 0;
-					this.oscillator.disconnect(this.master);
+					if (type) {
+						this.master.gain.value = 0;
+						this.oscillator.disconnect(this.master);
+					}
 					resolve();
 				}, length * 1000);
 			}, delay * 1000);
@@ -258,8 +263,8 @@ pico.Melody = class {
 	}
 };
 
-// Sound 2A03 class.
-pico.Sound2A03 = class extends pico.Sound {
+// Sound 8bit class.
+pico.Sound8bit = class extends pico.Sound {
 
 	// Beep.
 	async beep(kcent=0, length=0.1, delay=0) {
@@ -269,67 +274,132 @@ pico.Sound2A03 = class extends pico.Sound {
 	}
 
 	// Play pulse sound.
-	async playPulse(kcent=0, length=0.1, dutyCycle=0.5) {
-		console.log("Play pulse" + (dutyCycle * 100) + "%: " + kcent + " x " + length);
-		const type = "sawtooth";
+	async playPulse(kcent=0, length=0.1, pattern=0) {
+		console.log("Play pulse" + pattern + ": " + kcent + " x " + length);
 		const volume = 0.1;
 
-		// Create pulse filters.
-		// Original 2A03 parameter: dutyCycle=0.125,0.25,0.5,0.75
-		let pulseFilters = [];
-		pulseFilters[0] = this.audio.createGain();
-		pulseFilters[0].gain.value = -1;
-		pulseFilters[1] = this.audio.createDelay();
-		pulseFilters[1].delayTime.value = (1.0 - dutyCycle) / this.oscillator.frequency.value;
+		// Original 8bit argorithm, original parameter: pattern=0.125,0.25,0.5
+		if (pattern > 0) {
 
-		// Connect pulse filters to master volume.
-		this.oscillator.connect(pulseFilters[0]).connect(pulseFilters[1]).connect(this.master);
-		setTimeout(() => {
-			console.log("Disconnect pulse filters.");
-			this.oscillator.disconnect(pulseFilters[0]);
-			pulseFilters[0].disconnect(pulseFilters[1]);
-			pulseFilters[0] = null;
-			pulseFilters[1].disconnect(this.master);
-			pulseFilters[1] = null;
-		}, length * 1000);
+			// Create pulse filters.
+			let pulseFilters = [];
+			pulseFilters[0] = this.audio.createGain();
+			pulseFilters[0].gain.value = -1;
+			pulseFilters[1] = this.audio.createDelay();
+			pulseFilters[1].delayTime.value = (1.0 - pattern) / this.oscillator.frequency.value;
 
-		// Start.
-		await this._start(type, [kcent], volume, length);
+			// Connect pulse filters to master volume.
+			this.oscillator.connect(pulseFilters[0]).connect(pulseFilters[1]).connect(this.master);
+			setTimeout(() => {
+				console.log("Disconnect pulse filters.");
+				this.oscillator.disconnect(pulseFilters[0]);
+				pulseFilters[0].disconnect(pulseFilters[1]);
+				pulseFilters[0] = null;
+				pulseFilters[1].disconnect(this.master);
+				pulseFilters[1] = null;
+			}, length * 1000);
+
+			// Start.
+			const type = "sawtooth";
+			await this._start(type, [kcent], volume, length);
+
+		// Simple square sound.
+		} else {
+			const type = "square";
+			await this._start(type, [kcent], volume, length);
+		}
 	}
 
 	// Play triangle sound.
-	async playTriangle(kcent=0, length=0.1, freq=0) {
-		console.log("Play triangle" + freq + ": " + kcent + " x " + length);
-		const type = "triangle";
+	async playTriangle(kcent=0, length=0.1, pattern=0) {
+		if (this.audio == null) {
+			console.log("No audio.");
+			return;
+		}
+		console.log("Play triangle" + pattern + ": " + kcent + " x " + length);
 		const volume = 0.1;
 
-		// Not implemented.
-		// Original 2A03 argorithm.
-		// if (freq > 0) {
+		// Original 8bit argorithm, original parameter: pattern=16
+		if (pattern > 0) {
+
+			// Create triangle buffers.
+			let triangleBuffer = null;
+			triangleBuffer = this.audio.createBuffer(1, this.audio.sampleRate * length, this.audio.sampleRate);
+
+			// Original pseudo triangle argorithm.
+			let frequency = !kcent ? this.oscillator.frequency.value :
+				this.oscillator.frequency.value * (2 ** (kcent * 1000 / 1200));
+			let triangleCycle = 2 * Math.PI, value = 0;
+			let buffering = triangleBuffer.getChannelData(0);
+			for (let i = 0; i < triangleBuffer.length; i++) {
+				let k = (triangleCycle * frequency * i / this.audio.sampleRate) % triangleCycle;
+				//buffering[i] = Math.sin(k);
+				if (k < triangleCycle / 2) {
+					if (k < triangleCycle / 4) { // 0 -> 1.
+						value = k / (triangleCycle / 4);
+					} else { // 1 -> 0.
+						value = -k / (triangleCycle / 4) + 2;
+					}
+					buffering[i] = Math.floor(value * pattern) / pattern;
+				} else {
+					if (k < triangleCycle * 3 / 4) { // 0 -> -1.
+						value = -k / (triangleCycle / 4) + 2;
+					} else { // -1 -> 0.
+						value = k / (triangleCycle / 4) - 4;
+					}
+					buffering[i] = Math.ceil(value * pattern) / pattern;
+				}
+				//if (!Math.floor(i % 100)) {
+				//	console.log("buffering" + i + ": " + value + " -> " + buffering[i]);
+				//}
+			}
+
+			// Connect triangle generator to master volume.
+			this.master.gain.value = volume;
+			let triangleGenerator = null;
+			triangleGenerator = this.audio.createBufferSource();
+			triangleGenerator.buffer = triangleBuffer;
+			triangleGenerator.connect(this.master);
+			triangleGenerator.start();
+			setTimeout(() => {
+				console.log("Disconnect triangle generator.");
+				triangleGenerator.disconnect(this.master);
+				triangleGenerator = null;
+				triangleBuffer = null;
+			}, length * 1000);
+
+			// Start.
+			const type = null;
+			await this._start(type, [0], volume, length);
+
 		// Simple triangle sound.
-		// } else {
-		await this._start(type, [kcent], volume, length);
-		// }
+		} else {
+			const type = "triangle";
+			await this._start(type, [kcent], volume, length);
+		}
 	}
 
 	// Play noise sound.
-	async playNoise(kcent=0, length=0.1, freq=0) {
-		console.log("Play noise" + freq + ": " + length);
-		const type = null;
+	async playNoise(length=0.1, pattern=0) {
+		if (this.audio == null) {
+			console.log("No audio.");
+			return;
+		}
+		console.log("Play noise" + pattern + ": " + length);
 		const volume = 0.1;
 
 		// Create noise buffers.
 		let noiseBuffer = null;
 		noiseBuffer = this.audio.createBuffer(2, this.audio.sampleRate * length, this.audio.sampleRate);
 
-		// Original 2A03 argorithm and parameter: freq=1,6
-		if (freq > 0) {
+		// Original 8bit argorithm, original parameter: pattern=1,6
+		if (pattern > 0) {
 			let reg = 0x8000;
 			for (let j = 0; j < noiseBuffer.numberOfChannels; j++) {
 				let buffering = noiseBuffer.getChannelData(j);
 				for (let i = 0; i < noiseBuffer.length; i++) {
 					reg >>= 1;
-					reg |= ((reg ^ (reg >> freq)) & 1) << 15;
+					reg |= ((reg ^ (reg >> pattern)) & 1) << 15;
 					buffering[i] = reg & 1;
 				}
 			}
@@ -359,11 +429,12 @@ pico.Sound2A03 = class extends pico.Sound {
 		}, length * 1000);
 
 		// Start.
-		await this._start(type, [kcent], volume, length);
+		const type = null;
+		await this._start(type, [0], volume, length);
 	}
 };
 
 // Master sound.
 pico.sound = new pico.Sound();
 pico.melody = new pico.Melody();
-pico.sound2A03 = new pico.Sound2A03();
+pico.sound8bit = new pico.Sound8bit();

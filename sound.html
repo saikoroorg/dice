@@ -6,8 +6,9 @@
 <script src="sound.js"></script>
 <!--Main--><script>
 document.addEventListener("click", async (evt) => { // Need user input event before play sound.
+
 //*
-	picoPulse(0, 0.5, 0.75);
+	picoPulse(0, 0.5);
 	await picoWait(1000);
 	picoPulse(0, 0.5, 0.5);
 	await picoWait(1000);
@@ -15,24 +16,35 @@ document.addEventListener("click", async (evt) => { // Need user input event bef
 	await picoWait(1000);
 	picoPulse(0, 0.5, 0.125);
 	await picoWait(1000);
-	picoTriangle(0, 0.5);
+
+	picoTriangle(1.2, 0.5);
 	await picoWait(1000);
-	picoNoise(0, 0.5, 1);
+	picoTriangle(1.2, 0.5, 16);
 	await picoWait(1000);
-	picoNoise(0, 0.5, 6);
+
+	picoNoise(0.5);
+	await picoWait(1000);
+	picoNoise(0.5, 1);
+	await picoWait(1000);
+	picoNoise(0.5, 6);
 	await picoWait(1000);
 //*/
-	picoBeep(0, 0.1);
+
+//*/
+	picoBeep(-1.2, 0.1);
 	picoBeep(0, 0.1, 0.2);
-	picoBeep(0, 0.1, 0.4);
+	picoBeep(1.2, 0.1, 0.4);
 	await picoWait(1000);
-//*
+//*/
+
+//*/
 	picoPlay([-0.9,-0.7,-0.5,-0.4,-0.2,0,0.2], 0.2, 3);
 	await picoWait(2000);
 	picoPlay([-0.9,-0.7,-0.5,-0.4,-0.2,0,0.2], 0.2, 20);
 	await picoWait(5000);
 	await picoStop();
 //*/
+
 });</script><!--/Main-->
 </body>
 </html>
