@@ -282,11 +282,13 @@ pico.Sound8bit = class extends pico.Sound {
 		if (pattern > 0) {
 
 			// Create pulse filters.
+			let frequency = !kcent ? this.oscillator.frequency.value :
+				this.oscillator.frequency.value * (2 ** (kcent * 1000 / 1200));
 			let pulseFilters = [];
 			pulseFilters[0] = this.audio.createGain();
 			pulseFilters[0].gain.value = -1;
 			pulseFilters[1] = this.audio.createDelay();
-			pulseFilters[1].delayTime.value = (1.0 - pattern) / this.oscillator.frequency.value;
+			pulseFilters[1].delayTime.value = (1.0 - pattern) / frequency;
 
 			// Connect pulse filters to master volume.
 			this.oscillator.connect(pulseFilters[0]).connect(pulseFilters[1]).connect(this.master);
