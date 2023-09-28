@@ -7,9 +7,13 @@ var pico = pico || {};
 
 // Worker class.
 pico.Worker = class {
+	static script = "./daemon.js"; // This script file.
+	static manifest = "./manifest.json"; // Manifest file.
+
+	//*----------------------------------------------------------*/
+
+	// constructor.
 	constructor() {
-		this.script = "./daemon.js"; // This script file.
-		this.manifest = "./manifest.json"; // Manifest file.
 		this.replacing = {}; // Replacing table by manifest json.
 		this.cacheKey = null; // Cache key.
 		this.cacheName = null; // Cache key without version.
@@ -119,7 +123,7 @@ pico.Worker = class {
 			console.log("Renew worker.");
 
 			// Fetch new manifest file.
-			let url = this.manifest;
+			let url = pico.Worker.manifest;
 			console.log("Fetch new manifest: " + url);
 			return fetch(url, {cache: "no-store"}).then((result) => {
 
@@ -179,7 +183,7 @@ pico.Worker = class {
 			console.log("Check new maniefst file.");
 
 			// Fetch new manifest file.
-			let url = this.manifest;
+			let url = pico.Worker.manifest;
 			console.log("Fetch new manifest: " + url);
 			return fetch(url, {cache: "no-store"}).then((result) => {
 
@@ -246,7 +250,7 @@ pico.Worker = class {
 			console.log("Start worker.");
 
 			// Get cached manifest file.
-			let url = this.manifest, cacheKey = "*";
+			let url = pico.Worker.manifest, cacheKey = "*";
 			console.log("Get cached manifest file: " + url + " from " + cacheKey);
 			self.caches.open(cacheKey).then((cache) => {
 				cache.match(url, {ignoreSearch: true}).then((result) => {
@@ -304,7 +308,7 @@ pico.Worker = class {
 				console.log("Reinstall worker.");
 
 				// Refetch manifest file.
-				let url = this.manifest, cacheKey = "*", replacing = null;
+				let url = pico.Worker.manifest, cacheKey = "*", replacing = null;
 				console.log("Refetch manifest file: " + url);
 				this._fetchAndCache(url, cacheKey, replacing).then((result) => {
 
@@ -398,11 +402,11 @@ if (!self || !self.registration) {
 	try {
 
 		// Register worker.
-		if (pico.worker.script) {
+		if (pico.Worker.script) {
 			if (navigator.serviceWorker) {
-				console.log("Register worker: " + pico.worker.script);
+				console.log("Register worker: " + pico.Worker.script);
 				(async()=>{
-					await navigator.serviceWorker.register(pico.worker.script);
+					await navigator.serviceWorker.register(pico.Worker.script);
 				})();
 			} else {
 				console.log("No worker.");
@@ -428,13 +432,13 @@ if (!self || !self.registration) {
 
 	// Event on installing worker.
 	self.addEventListener("install", (event) => {
-		console.log("Install worker: " + pico.worker.script);
+		console.log("Install worker: " + pico.Worker.script);
 		event.waitUntil(pico.worker.install());
 	});
 
 	// Event on activating worker.
 	self.addEventListener("activate", (event) => {
-		console.log("Activate worker: " + pico.worker.script);
+		console.log("Activate worker: " + pico.Worker.script);
 		event.waitUntil(pico.worker.activate());
 	});
 
