@@ -186,7 +186,7 @@ pico.Sound = class {
 		// Stop audio.
 		let restTime = this.endTime - Date.now();
 		console.log("Stop: " + restTime);
-		if (restTime > 0) {
+		if (restTime >= 0) {
 			console.log("Disconnect.")
 			this.oscillator.disconnect(this.master);
 			this.master.gain.value = 0;

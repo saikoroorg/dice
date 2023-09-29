@@ -51,7 +51,8 @@ pico.Image = class {
 	static width = 200; // Canvas width.
 	static height = 200; // Canvas height.
 	static unit = 4; // Unit size. (Requires multiple of 2 for center pixel)
-	static lock = "picoImageLock"; // Lock object identifier;
+	static lock = "picoImageLock"; // Lock object identifier.
+	static parent = "screen"; // Parent pane id.
 
 	// Get random count.
 	random(max) {
@@ -111,17 +112,23 @@ pico.Image = class {
 	//*----------------------------------------------------------*/
 
 	// constructor.
-	constructor() {
+	constructor(parent=null) {
 		this.canvas = []; // Canvas element.
 		this.primary = 0; // Primary index.
 		this.image = null; // Canvas 2d context.
 		this.colors = [0,0,0, 51,51,51, 255,255,255]; // Color pallete. 
 		this.seed = Date.now(); // Random seed.
 
+		// Setup now.
+		if (parent) {
+			this._setup(parent);
+
 		// Setup after load event.
-		window.addEventListener("load", () => {
-			this._setup();
-		});
+		} else {
+			window.addEventListener("load", () => {
+				this._setup(pico.Image.parent);
+			});
+		}
 	}
 
 	// Setup image.
@@ -136,9 +143,9 @@ pico.Image = class {
 					this.canvas[i].width = pico.Image.width;
 					this.canvas[i].height = pico.Image.height;
 					this.canvas[i].style.imageRendering = "pixelated";
-					this.canvas[i].style.display = "none";
-					if (parent) {
-						parent.appendChild(this.canvas[i]);
+					this.canvas[i].style.display = i == this.primary ? "flex" : "none";
+					if (parent && document.getElementById(parent)) {
+						document.getElementById(parent).appendChild(this.canvas[i]);
 					} else {
 						document.body.appendChild(this.canvas[i]);
 					}
