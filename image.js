@@ -1,7 +1,12 @@
 /* PICO Image module */
 
+// Random.
+function picoRandom(max) {
+	return pico.image.random(max);
+}
+
 // Wait and flip canvas.
-async function picoFlip(t=1000) {
+async function picoFlip(t=10) {
 	try {
 		await pico.image.flip(t);
 	} catch (error) {
@@ -43,13 +48,28 @@ var pico = pico || {};
 
 // Image class.
 pico.Image = class {
-	static width = 100; // Canvas width.
-	static height = 100; // Canvas height.
+	static width = 200; // Canvas width.
+	static height = 200; // Canvas height.
 	static unit = 4; // Unit size. (Requires multiple of 2 for center pixel)
 	static lock = "picoImageLock"; // Lock object identifier;
 
+	// Get random count.
+	random(max) {
+
+		// Xorshift algorythm.
+		this.seed = this.seed ^ (this.seed << 13);
+		this.seed = this.seed ^ (this.seed >>> 17);
+		this.seed = this.seed ^ (this.seed << 15);
+		return Math.abs(this.seed % max);
+
+		// LCG algorythm.
+		// this.seed = (this.seed * 9301 + 49297) % 233280;
+		// let rand = this.seed / 233280;
+		// return Math.round(rand * max);
+	}
+
 	// Wait and flip canvas.
-	flip(t=1000) {
+	flip(t=10) {
 		return new Promise(r => setTimeout(r, t)).then(() => {
 			return navigator.locks.request(pico.Image.lock, async (lock) => {
 				return this._flip();
@@ -95,7 +115,8 @@ pico.Image = class {
 		this.canvas = []; // Canvas element.
 		this.primary = 0; // Primary index.
 		this.image = null; // Canvas 2d context.
-		this.colors = [0,0,0, 238,238,238, 255,255,255]; // Color pallete. 
+		this.colors = [0,0,0, 51,51,51, 255,255,255]; // Color pallete. 
+		this.seed = Date.now(); // Random seed.
 
 		// Setup after load event.
 		window.addEventListener("load", () => {
