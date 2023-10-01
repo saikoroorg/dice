@@ -188,8 +188,8 @@ pico.Sound = class {
 		console.log("Stop: " + restTime);
 		if (restTime >= 0) {
 			console.log("Disconnect.")
-			this.oscillator.disconnect(this.master);
 			this.master.gain.value = 0;
+			this.oscillator.disconnect(this.master);
 			this.stopped = true; // Wait for end on start function.
 		}
 		return Promise.resolve();
@@ -267,12 +267,12 @@ pico.Sound = class {
 							console.log("End: " + kcents + " x " + length * kcents.length);
 							if (type) {
 								console.log("EndTime: " + Date.now() + " -> " + this.endTime);
-								if (Date.now() >= this.endTime) {
+								//if (Date.now() >= this.endTime) {
 									console.log("Disconnect.")
-									this.oscillator.disconnect(this.master);
 									this.master.gain.value = 0;
+									this.oscillator.disconnect(this.master);
 									//this.endTime = 0;
-								}
+								//}
 							}
 						}
 						resolve();
@@ -315,12 +315,12 @@ pico.Sound = class {
 
 			// Start.
 			const type = "sawtooth";
-			return this._start(type, [kcent], length, volume);
+			return this._start(type, [kcent], length, 0, volume);
 
 		// Simple square sound.
 		} else {
 			const type = "square";
-			return this._start(type, [kcent], length, volume);
+			return this._start(type, [kcent], length, 0, volume);
 		}
 	}
 
@@ -382,12 +382,12 @@ pico.Sound = class {
 
 			// Start.
 			const type = null;
-			return this._start(type, [0], length, volume);
+			return this._start(type, [0], length, 0, volume);
 
 		// Simple triangle sound.
 		} else {
 			const type = "triangle";
-			return this._start(type, [kcent], length, volume);
+			return this._start(type, [kcent], length, 0, volume);
 		}
 	}
 
@@ -444,7 +444,7 @@ pico.Sound = class {
 
 			// Start.
 			const type = null;
-			return this._start(type, [0], length, volume);
+			return this._start(type, [0], length, 0, volume);
 
 		}, delay * 1000);
 	}
