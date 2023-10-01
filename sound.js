@@ -66,6 +66,7 @@ var pico = pico || {};
 pico.Sound = class {
 	static volume = 0.1; // Master volume.
 	static frequency = 440; // Master frequency.
+	static lock = "picoSoundLock"; // Lock object identifier.
 
 	// Wait.
 	wait(t=1000) {
@@ -200,9 +201,9 @@ pico.Sound = class {
 		if (this.audio == null) {
 			console.log("No audio.");
 			return Promise.reject();
-		} else if (!this.started) {
-			console.log("Not started.");
-			return Promise.resolve();
+		//} else if (!this.started) {
+		//	console.log("Not started.");
+		//	return Promise.resolve();
 		}
 
 		// Wait for previous end audio.
@@ -212,6 +213,7 @@ pico.Sound = class {
 				console.log("Wait for previous end: " + restTime);
 				setTimeout(resolve, restTime);
 			} else {
+				console.log("Ready: " + restTime);
 				resolve();
 			}
 		}); // end of new Promise.
@@ -243,40 +245,57 @@ pico.Sound = class {
 
 					// Connect.
 					if (type) {
-						this.oscillator.type = type;
-						for (let i = 0; i < kcents.length; i++) {
-							this.oscillator.detune.setValueAtTime(kcents[i] * 1000, this.audio.currentTime + length * i);
-						}
-						this.oscillator.connect(this.master);
-					}
-					this.master.gain.value = pico.Sound.volume * volume;
-
-					// Start.
-					if (!this.started) {
-						console.log("Start audio.");
-						this.oscillator.start();
-						this.started = true;
-					}
-
-					// Wait to end.
-					setTimeout(() => {
-						if (this.stopped) { // Stopped on stop function.
-							console.log("Stopped.");
-							//this.endTime = 0;
-						} else {
-							console.log("End: " + kcents + " x " + length * kcents.length);
-							if (type) {
-								console.log("EndTime: " + Date.now() + " -> " + this.endTime);
-								//if (Date.now() >= this.endTime) {
-									console.log("Disconnect.")
-									this.master.gain.value = 0;
-									this.oscillator.disconnect(this.master);
-									//this.endTime = 0;
-								//}
+						navigator.locks.request(pico.Sound.lock, async (lock) => {
+							let id = Date.now();
+							console.log("Connect: " + id)
+							this.oscillator.type = type;
+							for (let i = 0; i < kcents.length; i++) {
+								this.oscillator.detune.setValueAtTime(kcents[i] * 1000, this.audio.currentTime + length * i);
 							}
-						}
-						resolve();
-					}, length * kcents.length * 1000);
+							this.oscillator.connect(this.master);
+
+							this.master.gain.value = pico.Sound.volume * volume;
+
+							// Start.
+							if (!this.started) {
+								console.log("Start audio.");
+								this.oscillator.start();
+								this.started = true;
+							}
+
+							// Wait to end.
+							setTimeout(() => {
+								if (this.stopped) { // Stopped on stop function.
+									console.log("Stopped.");
+									//this.endTime = 0;
+								} else {
+									console.log("End: " + kcents + " x " + length * kcents.length);
+									//if (type) {
+										console.log("EndTime: " + Date.now() + " -> " + this.endTime);
+										//if (Date.now() >= this.endTime) {
+											console.log("Disconnect: " + id)
+											this.master.gain.value = 0;
+											this.oscillator.disconnect(this.master);
+											//this.endTime = 0;
+										//}
+									//}
+								}
+								resolve();
+							}, length * kcents.length * 1000);
+						}); // end of lock.
+					} else {
+						this.master.gain.value = pico.Sound.volume * volume;
+
+						// Wait to end.
+						setTimeout(() => {
+							if (this.stopped) { // Stopped on stop function.
+								console.log("Stopped.");
+							} else {
+								console.log("End: " + kcents + " x " + length * kcents.length);
+							}
+							resolve();
+						}, length * kcents.length * 1000);
+					}
 				}, delay * 1000);
 			}); // end of new Promise.
 		});
