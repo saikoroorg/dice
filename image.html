@@ -13,14 +13,14 @@
 		//[-22,-21,44,42], 0);
 		[-24,-24,48,48], 0);
 	picoText(
-		"01234567890+++\n" +
-		"abcdefghij0---\n" +
-		"klmnopqrst0+++\n" +
-		"uvwxyz.:!?0---\n" +
-		"01234567890+++\n" +
-		"abcdefghij0---\n" +
-		"klmnopqrst0+++\n" +
-		"uvwxyz.:!?0---\n",
+		"0123456789ab\n" +
+		"cdefghijklmn\n" +
+		"opqrstuvwxyz\n" +
+		".:!?-+.:!?-+\n" +
+		"0123456789ab\n" +
+		"cdefghijklmn\n" +
+		"opqrstuvwxyz\n" +
+		".:!?-+.:!?-+\n",
 		//[-22,-21,44,42], 1);
 		[-24,-24,48,48], 1);
 		//null, 1);
@@ -30,37 +30,46 @@
 document.addEventListener("click", async (evt) => {
 
 //*/
-	for (let i = 540; i >= 0; i--) {
+	for (let i = 0; i <= 180; i++) {
 		picoClear();
 		picoPixel(0, -24,-24, 48,48);
 
 		//picoChar("Hello+World", 1, 0,0, i)
 
 		picoText(
-			"01234567890+++\n" +
-			"abcdefghij0---\n" +
-			"klmnopqrst0+++\n" +
-			"uvwxyz.:!?0---\n" +
-			"01234567890+++\n" +
-			"abcdefghij0---\n" +
-			"klmnopqrst0+++\n" +
-			"uvwxyz.:!?0---\n",
+			"0123456789ab\n" +
+			"cdefghijklmn\n" +
+			"opqrstuvwxyz\n" +
+			".:!?-+.:!?-+\n" +
+			"0123456789ab\n" +
+			"cdefghijklmn\n" +
+			"opqrstuvwxyz\n" +
+			".:!?-+.:!?-+\n",
 			//[-22,-21,44,42], 1);
-			[-24,-24,48,48], 1, 0,0, i, Math.sin(i/360 * Math.PI))
-		picoChar("+", 2, 0,0)
-			
-		/*picoChar(":7       1:", 1, 0,0, i-60);
-		picoChar(":8       2:", 1, 0,0, i-30);
-		picoChar(":9       3:", 2, 0,0, i);
-		picoChar("10       4:", 1, 0,0, i+30);
-		picoChar("11       5:", 1, 0,0, i+60);
-		picoChar("12       6:", 1, 0,0, i+90);*/
+			[-24,-24,48,48], 1, 0,0, i);//, Math.sin(i/360 * Math.PI));
+		picoChar("+", 2, 0,0);
 
 		await picoFlip();
 	}
 //*/
 
-/*/
+//*/
+	for (let i = 0; i <= 180; i++) {
+		picoClear();
+		picoPixel(0, -24,-24, 48,48);
+
+		picoChar(":7       1:", 1, 0,0, i-60);
+		picoChar(":8       2:", 1, 0,0, i-30);
+		picoChar(":9       3:", 2, 0,0, i);
+		picoChar("10       4:", 1, 0,0, i+30);
+		picoChar("11       5:", 1, 0,0, i+60);
+		picoChar("12       6:", 1, 0,0, i+90);
+
+		await picoFlip();
+	}
+//*/
+
+//*/
 	const rect = [[-4,-4,8,8], [-3,-3,6,6]];
 	const dots = [
 		[1,0,0],

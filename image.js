@@ -256,8 +256,8 @@ pico.Image = class {
 		let mx = pico.Image.width / ux, my = pico.Image.height / uy;
 
 		if (area) {
-			ox = area[0] * u + ux / 2;
-			oy = area[1] * u + uy / 2;
+			ox = (area[0] + area[2] / 2) * u;
+			oy = (area[1] + area[3] / 2) * u;
 			mx = (area[2] + 1) * u / ux;
 			my = (area[3] + 1) * u / uy;
 		}
@@ -267,15 +267,17 @@ pico.Image = class {
 			return new Promise(async (resolve) => {
 				await this._ready();
 				await this._reset(ox + x, oy + y, angle, scale);
+				await this._move((-ux * (mx - 1) + u) / 2 , (-uy * (my - 1) + u) / 2);
 				for (let i = 0, ix = 0, iy = 0; i < text.length && iy < my; i++) {
 					let char = text.charCodeAt(i);
 					//console.log("char="+char + " ix="+ix + "/"+mx + " iy="+iy + "/"+my);
 					if (char == "\r".charCodeAt(0) || char == "\n".charCodeAt(0)) {
+						await this._move(-ux * ix, uy);
 						ix = 0;
 						iy++;
 					} else if (ix < mx) {
-						await this._reset(ox + ux * ix, oy + uy * iy, angle, scale);
 						await this._char(char, c);
+						await this._move(ux, 0);
 						ix++;
 					}
 				}
