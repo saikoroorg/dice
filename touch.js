@@ -118,8 +118,8 @@ pico.Touch = class {
 				parent.addEventListener("touchmove", (evt) => {
 					let rect = parent.getBoundingClientRect();
 					navigator.locks.request(this.lock, async (lock) => {
-						for (let i = 0; i < evt.changedTouches.length; ++i) {
-							this._eventTouchOff(evt.changedTouches[i].identifier, evt.changedTouches[i].pageX - rect.x, evt.changedTouches[i].pageY - rect.y);
+						for (let i = 0; i < evt.touches.length; ++i) {
+							this._eventTouchOn(evt.touches[i].identifier, evt.touches[i].pageX - rect.x, evt.touches[i].pageY - rect.y);
 						}
 					}); // end of lock.
 				});
@@ -132,6 +132,12 @@ pico.Touch = class {
 					}); // end of lock.
 				});
 				parent.addEventListener("touchcancel", () => {
+					let rect = parent.getBoundingClientRect();
+					navigator.locks.request(this.lock, async (lock) => {
+						for (let i = 0; i < evt.changedTouches.length; ++i) {
+							this._eventTouchOff(evt.changedTouches[i].identifier, evt.changedTouches[i].pageX - rect.x, evt.changedTouches[i].pageY - rect.y);
+						}
+					}); // end of lock.
 				});
 			}
 			return resolve();
@@ -147,33 +153,12 @@ pico.Touch = class {
 		return Promise.resolve();
 	}
 
-	// Event handler.
-	_eventMouseUp() {
-		for (let i = 0; i < this.touching[0].length; i++) {
-			if (this.touching[0][i].w == 0) {
-				this.touching[0][i] = {w:0, action:true};
-				console.log("Mouse up: " + i + ":" + JSON.stringify(this.touching[i]));
-				break;
-			}
-		}
-	}
-
-	// Event handler.
-	_eventMouseMove(x, y) {
-		for (let i = 0; i < this.touching[0].length; i++) {
-			if (this.touching[0][i].w == 0 && this.touching[0][i].mouse) {
-				this.touching[0][i] = {w:0, x:x, y:y, mouse:true};
-				//console.log("Mouse move: " + i + ":" + JSON.stringify(this.touching[i]));
-				break;
-			}
-		}
-	}
-
-	// Event handler.
+	// Mouse down event handler.
 	_eventMouseDown(x, y) {
 		for (let i = 0; i < this.touching[0].length; i++) {
 			if (this.touching[0][i].w == 0) {
-				this.touching[0][i] = {w:w, x:x, y:y, action:true};
+				this.touching[0][i].motion = false;
+				this.touching[0][i].action = true;
 				console.log("Mouse up: " + i + ":" + JSON.stringify(this.touching[i]));
 				break;
 			}
@@ -181,15 +166,39 @@ pico.Touch = class {
 
 		// Mouse down trigger.
 		let i = this.touching[0].length;
-		this.touching[0][i] = {w:0, x:x, y:y, mouse:true};
+		this.touching[0][i] = {w:0, x:x, y:y, motion:true};
 		console.log("Mouse down: " + i + ":" + JSON.stringify(this.touching[i]));
 	}
 
-	// Event handler.
+	// Mouse move event handler.
+	_eventMouseMove(x, y) {
+		for (let i = 0; i < this.touching[0].length; i++) {
+			if (this.touching[0][i].w == 0 && this.touching[0][i].motion) {
+				this.touching[0][i].motion = true;
+				this.touching[0][i].x = x;
+				this.touching[0][i].y = y;
+				//console.log("Mouse move: " + i + ":" + JSON.stringify(this.touching[i]));
+				break;
+			}
+		}
+	}
+
+	// Mouse up event handler.
+	_eventMouseUp() {
+		for (let i = 0; i < this.touching[0].length; i++) {
+			this.touching[0][i].motion = false;
+			this.touching[0][i].action = true;
+			console.log("Mouse up: " + i + ":" + JSON.stringify(this.touching[i]));
+			break;
+		}
+	}
+
+	// Touch on event handler.
 	_eventTouchOn(w, x, y) {
 		for (let i = 0; i < this.touching[0].length; i++) {
-			if (this.touching[0][i].w == 0) {
-				this.touching[0][i] = {w:w, x:x, y:y, action:true};
+			if (this.touching[0][i].w == w) {
+				this.touching[0][i].motion = false;
+				this.touching[0][i].action = true;
 				console.log("Touch up: " + i + ":" + JSON.stringify(this.touching[i]));
 				break;
 			}
@@ -197,74 +206,18 @@ pico.Touch = class {
 
 		// Touch down trigger.
 		let i = this.touching[0].length;
-		this.touching[0][i] = {w:0, x:x, y:y, mouse:true};
+		this.touching[0][i] = {w:w, x:x, y:y, motion:true};
 		console.log("Touch down: " + i + ":" + JSON.stringify(this.touching[i]));
 	}
 
-	// Event handler.
+	// Touch off event handler.
 	_eventTouchOff(w, x, y) {
 		for (let i = 0; i < this.touching[0].length; i++) {
-			if (this.touching[0][i].w == 0) {
-				this.touching[0][i] = {w:0, action:true};
+			if (this.touching[0][i].w == w) {
+				this.touching[0][i].motion = false;
+				this.touching[0][i].action = true;
 				console.log("Touch up: " + i + ":" + JSON.stringify(this.touching[i]));
 				break;
-			}
-		}
-	}
-
-	// Event handler.
-	_event(w, x, y, z) {
-		//console.log("Event: " + w + "," + x + "," + y + "," + z);
-
-		let trigger = true;
-		if (!w) {
-
-			// Check trigger.
-			for (let i = 0; i < this.touching[0].length; i++) {
-				if (this.touching[0][i].w == w) {
-
-					// Touch up trigger.
-					if (z < 0) {
-						this.touching[0][i] = {w:w, x:x, y:y, action:true};
-						console.log("Mouse up: " + i + ":" + JSON.stringify(this.touching[i]));
-
-					// Mouse move.
-					} else if (this.touching[0][i].mouse) {
-						this.touching[0][i] = {w:w, x:x, y:y, mouse:true};
-						//console.log("Mouse move: " + i + ":" + JSON.stringify(this.touching[i]));
-					}
-
-					trigger = false;
-					break;
-				}
-			}
-
-			// Mouse down trigger.
-			if (trigger && z > 0) {
-				let i = this.touching[0].length;
-				this.touching[0][i] = {w:w, x:x, y:y, mouse:true};
-				console.log("Mouse down: " + i + ":" + JSON.stringify(this.touching[i]));
-			}
-
-		} else {
-
-			// Check trigger.
-			for (let i = 0; i < this.touching[0].length; i++) {
-
-				// Touch move.
-				if (this.touching[0][i].w == w) {
-					this.touching[0][i] = {w:w, x:x, y:y, touch:true};
-					//console.log("Touch move: " + i + ":" + JSON.stringify(this.touching[i]));
-					trigger = false;;
-					break;
-				}
-			}
-
-			// Touch down trigger.
-			if (trigger && z > 0) {
-				let i = this.touching[0].length;
-				this.touching[0][i] = {w:w, x:x, y:y, touch:true};
-				console.log("Touch down: " + i + ":" + JSON.stringify(this.touching[i]));
 			}
 		}
 	}
@@ -289,22 +242,15 @@ pico.Touch = class {
 			for (let j = 0; j < this.touching[1].length; j++) {
 				if (this.touching[1][j].w == this.touching[0][i].w) {
 
-					// Mouse up trigger.
+					// Touch up trigger.
 					if (this.touching[0][i].action) {
 						console.log("Up: " + j + ":" + JSON.stringify(this.touching[0][i]));
 						this.touching[1][j] = {w:this.touching[1][j].w, x:this.touching[1][j].x, y:this.touching[1][j].y, action:true};
 
-					// Touch up trigger.
-					} else if (!this.touching[0][i].mouse && !this.touching[0][i].touch) {
-						console.log("Up: " + j + ":" + JSON.stringify(this.touching[0][i]));
-						this.touching[1][j] = {w:this.touching[1][j].w, x:this.touching[1][j].x, y:this.touching[1][j].y, action:true};
-
-					// Mouse/Touch holding.
-					} else if (this.touching[0][i].mouse) {
+					// Touch holding.
+					} else if (this.touching[0][i].motion) {
 						console.log("Holding: " + j + ":" + JSON.stringify(this.touching[0][i]));
-						this.touching[1][j] = {w:this.touching[0][i].w, x:this.touching[0][i].x, y:this.touching[0][i].y, mouse:true};
-					} else if (this.touching[0][i].touch) {
-						this.touching[1][j] = {w:this.touching[0][i].w, x:this.touching[0][i].x, y:this.touching[0][i].y, touch:true};
+						this.touching[1][j] = {w:this.touching[0][i].w, x:this.touching[0][i].x, y:this.touching[0][i].y, motion:true};
 					}
 
 					trigger = false;;
@@ -312,14 +258,12 @@ pico.Touch = class {
 				}
 			}
 
-			// Mouse/Touch down trigger.
+			// Touch down trigger.
 			if (trigger) {
 				let k = this.touching[1].length;
-				if (this.touching[0][i].mouse) {
+				if (this.touching[0][i].motion) {
 					console.log("Down: " + i + ":" + JSON.stringify(this.touching[0][i]));
-					this.touching[1][k] = {w:this.touching[0][i].w, x:this.touching[0][i].x, y:this.touching[0][i].y, mouse:true};
-				} else if (this.touching[0][i].touch) {
-					this.touching[1][k] = {w:this.touching[0][i].w, x:this.touching[0][i].x, y:this.touching[0][i].y, touch:true};
+					this.touching[1][k] = {w:this.touching[0][i].w, x:this.touching[0][i].x, y:this.touching[0][i].y, motion:true};
 				}
 			}
 		}
