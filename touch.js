@@ -110,8 +110,8 @@ pico.Touch = class {
 				parent.addEventListener("touchstart", (evt) => {
 					let rect = parent.getBoundingClientRect();
 					navigator.locks.request(this.lock, async (lock) => {
-						for (let i = 0; i < evt.touches.length; ++i) {
-							this._eventTouchOn(evt.touches[i].identifier, evt.touches[i].pageX - rect.x, evt.touches[i].pageY - rect.y);
+						for (let i = 0; i < evt.changedTouches.length; ++i) {
+							this._eventTouchDown(evt.changedTouches[i].identifier, evt.changedTouches[i].pageX - rect.x, evt.changedTouches[i].pageY - rect.y);
 						}
 					}); // end of lock.
 				});
@@ -119,24 +119,24 @@ pico.Touch = class {
 					evt.preventDefault(); // Lock scroll.
 					let rect = parent.getBoundingClientRect();
 					navigator.locks.request(this.lock, async (lock) => {
-						for (let i = 0; i < evt.touches.length; ++i) {
-							this._eventTouchOn(evt.touches[i].identifier, evt.touches[i].pageX - rect.x, evt.touches[i].pageY - rect.y);
+						for (let i = 0; i < evt.changedTouches.length; ++i) {
+							this._eventTouchMove(evt.changedTouches[i].identifier, evt.changedTouches[i].pageX - rect.x, evt.changedTouches[i].pageY - rect.y);
 						}
 					}); // end of lock.
-				});
+				}, {passive: false});
 				parent.addEventListener("touchend", (evt) => {
 					let rect = parent.getBoundingClientRect();
 					navigator.locks.request(this.lock, async (lock) => {
 						for (let i = 0; i < evt.changedTouches.length; ++i) {
-							this._eventTouchOff(evt.changedTouches[i].identifier, evt.changedTouches[i].pageX - rect.x, evt.changedTouches[i].pageY - rect.y);
+							this._eventTouchUp(evt.changedTouches[i].identifier, evt.changedTouches[i].pageX - rect.x, evt.changedTouches[i].pageY - rect.y);
 						}
 					}); // end of lock.
 				});
-				parent.addEventListener("touchcancel", () => {
+				parent.addEventListener("touchcancel", (evt) => {
 					let rect = parent.getBoundingClientRect();
 					navigator.locks.request(this.lock, async (lock) => {
 						for (let i = 0; i < evt.changedTouches.length; ++i) {
-							this._eventTouchOff(evt.changedTouches[i].identifier, evt.changedTouches[i].pageX - rect.x, evt.changedTouches[i].pageY - rect.y);
+							this._eventTouchCancel(evt.changedTouches[i].identifier, evt.changedTouches[i].pageX - rect.x, evt.changedTouches[i].pageY - rect.y);
 						}
 					}); // end of lock.
 				});
@@ -157,28 +157,26 @@ pico.Touch = class {
 	// Mouse down event handler.
 	_eventMouseDown(x, y) {
 		for (let i = 0; i < this.touching[0].length; i++) {
-			if (this.touching[0][i].w == 0) {
-				this.touching[0][i].motion = false;
-				this.touching[0][i].action = true;
-				console.log("Mouse up: " + i + ":" + JSON.stringify(this.touching[i]));
+			if (this.touching[0][i].w == -1) {
+				this.touching[0][i].motion = 0;
+				this.touching[0][i].action = 1;
+				console.log("Mouse up: " + i + ":" + JSON.stringify(this.touching[0][i]));
 				break;
 			}
 		}
-
-		// Mouse down trigger.
 		let i = this.touching[0].length;
-		this.touching[0][i] = {w:0, x:x, y:y, motion:true};
-		console.log("Mouse down: " + i + ":" + JSON.stringify(this.touching[i]));
+		this.touching[0][i] = {w:-1, x:x, y:y, motion:1};
+		console.log("Mouse down: " + i + ":" + JSON.stringify(this.touching[0][i]));
 	}
 
 	// Mouse move event handler.
 	_eventMouseMove(x, y) {
 		for (let i = 0; i < this.touching[0].length; i++) {
-			if (this.touching[0][i].w == 0 && this.touching[0][i].motion) {
-				this.touching[0][i].motion = true;
+			if (this.touching[0][i].w == -1 && this.touching[0][i].motion) {
+				this.touching[0][i].motion = 1;
 				this.touching[0][i].x = x;
 				this.touching[0][i].y = y;
-				//console.log("Mouse move: " + i + ":" + JSON.stringify(this.touching[i]));
+				//console.log("Mouse move: " + i + ":" + JSON.stringify(this.touching[0][i]));
 				break;
 			}
 		}
@@ -187,37 +185,53 @@ pico.Touch = class {
 	// Mouse up event handler.
 	_eventMouseUp() {
 		for (let i = 0; i < this.touching[0].length; i++) {
-			this.touching[0][i].motion = false;
-			this.touching[0][i].action = true;
-			console.log("Mouse up: " + i + ":" + JSON.stringify(this.touching[i]));
-			break;
-		}
-	}
-
-	// Touch on event handler.
-	_eventTouchOn(w, x, y) {
-		for (let i = 0; i < this.touching[0].length; i++) {
-			if (this.touching[0][i].w == w) {
-				this.touching[0][i].motion = false;
-				this.touching[0][i].action = true;
-				console.log("Touch up: " + i + ":" + JSON.stringify(this.touching[i]));
+			if (this.touching[0][i].w == -1) {
+				this.touching[0][i].motion = 0;
+				this.touching[0][i].action = 1;
+				console.log("Mouse up: " + i + ":" + JSON.stringify(this.touching[0][i]));
 				break;
 			}
 		}
-
-		// Touch down trigger.
-		let i = this.touching[0].length;
-		this.touching[0][i] = {w:w, x:x, y:y, motion:true};
-		console.log("Touch down: " + i + ":" + JSON.stringify(this.touching[i]));
 	}
 
-	// Touch off event handler.
-	_eventTouchOff(w, x, y) {
+	// Touch down event handler.
+	_eventTouchDown(w, x, y) {
+		let i = this.touching[0].length;
+		this.touching[0][i] = {w:w, x:x, y:y, motion:1};
+		console.log("Touch down: " + i + ":" + JSON.stringify(this.touching[0][i]));
+	}
+
+	// Touch move event handler.
+	_eventTouchMove(w, x, y) {
+		for (let i = 0; i < this.touching[0].length; i++) {
+			if (this.touching[0][i].w == 0 && this.touching[0][i].motion) {
+				this.touching[0][i].motion = 1;
+				this.touching[0][i].x = x;
+				this.touching[0][i].y = y;
+				//console.log("Touch move: " + i + ":" + JSON.stringify(this.touching[0][i]));
+				break;
+			}
+		}
+	}
+
+	// Touch up event handler.
+	_eventTouchUp(w, x, y) {
 		for (let i = 0; i < this.touching[0].length; i++) {
 			if (this.touching[0][i].w == w) {
-				this.touching[0][i].motion = false;
-				this.touching[0][i].action = true;
-				console.log("Touch up: " + i + ":" + JSON.stringify(this.touching[i]));
+				this.touching[0][i].motion = 0;
+				this.touching[0][i].action = 1;
+				console.log("Touch up: " + i + ":" + JSON.stringify(this.touching[0][i]));
+				break;
+			}
+		}
+	}
+
+	// Touch cancel event handler.
+	_eventTouchCancel(w, x, y) {
+		for (let i = 0; i < this.touching[0].length; i++) {
+			if (this.touching[0][i].w == w) {
+				this.touching[0][i].motion = -1;
+				console.log("Touch cancel: " + i + ":" + JSON.stringify(this.touching[0][i]));
 				break;
 			}
 		}
@@ -226,59 +240,47 @@ pico.Touch = class {
 	// Sync event.
 	_sync() {
 
-		// Delete ended touching state.
-		let touching1 = [];
-		for (let j = 0; j < this.touching[1].length; j++) {
-			if (!this.touching[1][j].action) {
-				touching1[touching1.length] = this.touching[1][j];
-			}
-		}
-		this.touching[1] = touching1;
-
 		// Update new touching state.
+		let touching0 = [], touching1 = [];
 		for (let i = 0; i < this.touching[0].length; i++) {
 
-			// Check down trigger.
-			let trigger = true;
-			for (let j = 0; j < this.touching[1].length; j++) {
-				if (this.touching[1][j].w == this.touching[0][i].w) {
-
-					// Touch up trigger.
-					if (this.touching[0][i].action) {
+			// Touch up trigger.
+			if (this.touching[0][i].action) {
+				for (let j = 0; j < this.touching[1].length; j++) {
+					if (this.touching[1][j].w == this.touching[0][i].w) {
 						console.log("Up: " + j + ":" + JSON.stringify(this.touching[0][i]));
-						this.touching[1][j] = {w:this.touching[1][j].w, x:this.touching[1][j].x, y:this.touching[1][j].y, action:true};
-
-					// Touch holding.
-					} else if (this.touching[0][i].motion) {
-						console.log("Holding: " + j + ":" + JSON.stringify(this.touching[0][i]));
-						this.touching[1][j] = {w:this.touching[0][i].w, x:this.touching[0][i].x, y:this.touching[0][i].y, motion:true};
+						touching1[touching1.length] = {w:this.touching[0][i].w, x:this.touching[0][i].x, y:this.touching[0][i].y, action:this.touching[0][i].action};
+						break;
 					}
-
-					trigger = false;;
-					break;
 				}
-			}
 
-			// Touch down trigger.
-			if (trigger) {
-				let k = this.touching[1].length;
-				if (this.touching[0][i].motion) {
+			// Touch holding.
+			} else if (this.touching[0][i].motion > 0 && this.touching[0][i].motion <= 100) {
+				this.touching[0][i].motion++; // Time limit for exceptional movement.
+				touching0[touching0.length] = this.touching[0][i];
+
+				// Check down trigger.
+				let trigger = true;
+				for (let j = 0; j < this.touching[1].length; j++) {
+					if (this.touching[1][j].w == this.touching[0][i].w) {
+						console.log("Holding: " + j);// + ":" + JSON.stringify(this.touching[0][i]));
+						touching1[touching1.length] = {w:this.touching[0][i].w, x:this.touching[0][i].x, y:this.touching[0][i].y, motion:this.touching[0][i].motion};
+
+						trigger = false;;
+						break;
+					}
+				}
+
+				// Touch down trigger.
+				if (trigger) {
 					console.log("Down: " + i + ":" + JSON.stringify(this.touching[0][i]));
-					this.touching[1][k] = {w:this.touching[0][i].w, x:this.touching[0][i].x, y:this.touching[0][i].y, motion:true};
+					touching1[touching1.length] = {w:this.touching[0][i].w, x:this.touching[0][i].x, y:this.touching[0][i].y, motion:1};
 				}
 			}
 		}
-
-		// Delete ended touching state.
-		let touching0 = [];
-		for (let j = 0; j < this.touching[0].length; j++) {
-			if (!this.touching[0][j].action) {
-				touching0[touching0.length] = this.touching[0][j];
-			}
-		}
-		this.touching[0] = touching0;
-
-		this.primary = 1;
+		this.touching[0] = touching0; // Touching state for write.
+		this.touching[1] = touching1; // Touching state for read.
+		this.primary = 1; // Read from touching state 1.
 	}
 
 	// Check touch motion.
@@ -288,8 +290,8 @@ pico.Touch = class {
 			if (r <= 0) {
 				return i + 1;
 			}
-			let x2 = Math.pow(cx - x - this.touching[this.primary][i].x, 2);
-			let y2 = Math.pow(cy - y - this.touching[this.primary][i].y, 2);
+			let x2 = Math.pow(cx + x - this.touching[this.primary][i].x, 2);
+			let y2 = Math.pow(cy + y - this.touching[this.primary][i].y, 2);
 			//console.log("Motion: " + x2 + "," + y2 + "<=" + (r*r));
 			if (x2 + y2 <= r * r) {
 				return i + 1;
@@ -306,8 +308,8 @@ pico.Touch = class {
 				if (r <= 0) {
 					return i + 1;
 				}
-				let x2 = Math.pow(cx - x - this.touching[this.primary][i].x, 2);
-				let y2 = Math.pow(cy - y - this.touching[this.primary][i].y, 2);
+				let x2 = Math.pow(cx + x - this.touching[this.primary][i].x, 2);
+				let y2 = Math.pow(cy + y - this.touching[this.primary][i].y, 2);
 				//console.log("Action: " + x2 + "," + y2 + "<=" + (r*r));
 				if (x2 + y2 <= r * r) {
 					return i + 1;
