@@ -30,7 +30,7 @@
 document.addEventListener("click", async (evt) => {
 
 //*/
-	for (let i = 0; i <= 180; i++) {
+	for (let i = 0; i <= 360; i++) {
 		picoClear();
 		picoPixel(0, -24,-24, 48,48);
 
@@ -46,7 +46,7 @@ document.addEventListener("click", async (evt) => {
 			"opqrstuvwxyz\n" +
 			".:!?-+.:!?-+\n",
 			//[-22,-21,44,42], 1);
-			[-24,-24,48,48], 1, 0,0, i);//, Math.sin(i/360 * Math.PI));
+			[-24,-24,48,48], 1, 0,0, i, Math.cos(i/180 * Math.PI));
 		picoChar("+", 2, 0,0);
 
 		await picoFlip();
