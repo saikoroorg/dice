@@ -24,7 +24,7 @@
 			if (picoAction(x, y, 20)) {
 				picoChar("+", 0, x, y)
 				//picoFlip();
-				//await picoSync(1000);
+				//await picoRead(1000);
 
 				const rect = [[-4,-4,8,8], [-3,-3,6,6]];
 				const dots = [
@@ -50,6 +50,7 @@
 				}
 				picoClear();
 				await picoFlip(1000);
+				await picoRead();
 
 			} else if (picoMotion(x, y, 20)) {
 				picoChar("-", 0, x, y)
@@ -59,7 +60,7 @@
 		}
 
 		await picoFlip();
-		await picoSync();
+		await picoRead();
 	}
 //*/
 

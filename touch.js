@@ -1,9 +1,9 @@
 /* PICO Touch module */
 
-// Sync touch event.
-async function picoSync(t=10) {
+// Read touch event.
+async function picoRead(t=10) {
 	try {
-		return await pico.touch.sync(t);
+		return await pico.touch.read(t);
 	} catch (error) {
 		console.error(error);
 	}
@@ -31,11 +31,11 @@ pico.Touch = class {
 	static unit = 4; // Unit size. (Requires multiple of 2 for center pixel)
 	static parent = "picoTouch"; // Parent element id.
 
-	// Sync touch event.
-	sync(t=10) {
+	// Read touch event.
+	read(t=10) {
 		return new Promise(r => setTimeout(r, t)).then(() => {
 			return navigator.locks.request(this.lock, async (lock) => {
-				return this._sync();
+				return this._read();
 			}); // end of lock.
 		});
 	}
@@ -93,18 +93,19 @@ pico.Touch = class {
 				parent.addEventListener("mousedown", (evt) => {
 					let rect = parent.getBoundingClientRect();
 					navigator.locks.request(this.lock, async (lock) => {
-						this._eventMouseDown(evt.pageX - rect.x, evt.pageY - rect.y);
+						this._eventTouchCancel(-1);
+						this._eventTouchDown(-1, evt.pageX - rect.x, evt.pageY - rect.y);
 					}); // end of lock.
 				});
 				parent.addEventListener("mousemove", (evt) => {
 					let rect = parent.getBoundingClientRect();
 					navigator.locks.request(this.lock, async (lock) => {
-						this._eventMouseMove(evt.pageX - rect.x, evt.pageY - rect.y);
+						this._eventTouchMove(-1, evt.pageX - rect.x, evt.pageY - rect.y);
 					}); // end of lock.
 				});
 				document.addEventListener("mouseup", () => {
 					navigator.locks.request(this.lock, async (lock) => {
-						this._eventMouseUp();
+						this._eventTouchUp(-1);
 					}); // end of lock.
 				});
 				parent.addEventListener("touchstart", (evt) => {
@@ -128,7 +129,7 @@ pico.Touch = class {
 					let rect = parent.getBoundingClientRect();
 					navigator.locks.request(this.lock, async (lock) => {
 						for (let i = 0; i < evt.changedTouches.length; ++i) {
-							this._eventTouchUp(evt.changedTouches[i].identifier, evt.changedTouches[i].pageX - rect.x, evt.changedTouches[i].pageY - rect.y);
+							this._eventTouchUp(evt.changedTouches[i].identifier);
 						}
 					}); // end of lock.
 				});
@@ -136,7 +137,7 @@ pico.Touch = class {
 					let rect = parent.getBoundingClientRect();
 					navigator.locks.request(this.lock, async (lock) => {
 						for (let i = 0; i < evt.changedTouches.length; ++i) {
-							this._eventTouchCancel(evt.changedTouches[i].identifier, evt.changedTouches[i].pageX - rect.x, evt.changedTouches[i].pageY - rect.y);
+							this._eventTouchCancel(evt.changedTouches[i].identifier);
 						}
 					}); // end of lock.
 				});
@@ -154,46 +155,6 @@ pico.Touch = class {
 		return Promise.resolve();
 	}
 
-	// Mouse down event handler.
-	_eventMouseDown(x, y) {
-		for (let i = 0; i < this.touching[0].length; i++) {
-			if (this.touching[0][i].w == -1) {
-				this.touching[0][i].motion = 0;
-				this.touching[0][i].action = 1;
-				console.log("Mouse up: " + i + ":" + JSON.stringify(this.touching[0][i]));
-				break;
-			}
-		}
-		let i = this.touching[0].length;
-		this.touching[0][i] = {w:-1, x:x, y:y, motion:1};
-		console.log("Mouse down: " + i + ":" + JSON.stringify(this.touching[0][i]));
-	}
-
-	// Mouse move event handler.
-	_eventMouseMove(x, y) {
-		for (let i = 0; i < this.touching[0].length; i++) {
-			if (this.touching[0][i].w == -1 && this.touching[0][i].motion) {
-				this.touching[0][i].motion = 1;
-				this.touching[0][i].x = x;
-				this.touching[0][i].y = y;
-				//console.log("Mouse move: " + i + ":" + JSON.stringify(this.touching[0][i]));
-				break;
-			}
-		}
-	}
-
-	// Mouse up event handler.
-	_eventMouseUp() {
-		for (let i = 0; i < this.touching[0].length; i++) {
-			if (this.touching[0][i].w == -1) {
-				this.touching[0][i].motion = 0;
-				this.touching[0][i].action = 1;
-				console.log("Mouse up: " + i + ":" + JSON.stringify(this.touching[0][i]));
-				break;
-			}
-		}
-	}
-
 	// Touch down event handler.
 	_eventTouchDown(w, x, y) {
 		let i = this.touching[0].length;
@@ -204,7 +165,7 @@ pico.Touch = class {
 	// Touch move event handler.
 	_eventTouchMove(w, x, y) {
 		for (let i = 0; i < this.touching[0].length; i++) {
-			if (this.touching[0][i].w == 0 && this.touching[0][i].motion) {
+			if (this.touching[0][i].w == w && this.touching[0][i].motion) {
 				this.touching[0][i].motion = 1;
 				this.touching[0][i].x = x;
 				this.touching[0][i].y = y;
@@ -215,7 +176,7 @@ pico.Touch = class {
 	}
 
 	// Touch up event handler.
-	_eventTouchUp(w, x, y) {
+	_eventTouchUp(w) {
 		for (let i = 0; i < this.touching[0].length; i++) {
 			if (this.touching[0][i].w == w) {
 				this.touching[0][i].motion = 0;
@@ -227,7 +188,7 @@ pico.Touch = class {
 	}
 
 	// Touch cancel event handler.
-	_eventTouchCancel(w, x, y) {
+	_eventTouchCancel(w) {
 		for (let i = 0; i < this.touching[0].length; i++) {
 			if (this.touching[0][i].w == w) {
 				this.touching[0][i].motion = -1;
@@ -237,8 +198,8 @@ pico.Touch = class {
 		}
 	}
 
-	// Sync event.
-	_sync() {
+	// Read touch event.
+	_read() {
 
 		// Update new touching state.
 		let touching0 = [], touching1 = [];
