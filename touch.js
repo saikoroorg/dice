@@ -93,7 +93,7 @@ pico.Touch = class {
 				parent.addEventListener("mousedown", (evt) => {
 					let rect = parent.getBoundingClientRect();
 					navigator.locks.request(this.lock, async (lock) => {
-						this._eventMouseDown(0, evt.pageX - rect.x, evt.pageY - rect.y);
+						this._eventMouseDown(evt.pageX - rect.x, evt.pageY - rect.y);
 					}); // end of lock.
 				});
 				parent.addEventListener("mousemove", (evt) => {
