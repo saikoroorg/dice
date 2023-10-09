@@ -87,7 +87,7 @@ pico.Image = class {
 	static width = 200; // Image width.
 	static height = 200; // Image height.
 	static unit = 4; // Unit size. (Requires multiple of 2 for center pixel)
-	static parent = "picoImage"; // Parent element id.
+	static parent = "picoImage"; // Parent element class.
 
 	static charWidth = 4 * 4;
 	static charHeight = 4 * 6;
@@ -328,8 +328,8 @@ pico.Image = class {
 					this.canvas[i].height = pico.Image.height;
 					this.canvas[i].style.imageRendering = "pixelated";
 					this.canvas[i].style.display = i == this.primary ? "flex" : "none";
-					if (parent && document.getElementById(parent)) {
-						document.getElementById(parent).appendChild(this.canvas[i]);
+					if (parent && document.getElementsByClassName(parent)[0]) {
+						document.getElementsByClassName(parent)[0].appendChild(this.canvas[i]);
 					} else {
 						document.body.appendChild(this.canvas[i]);
 					}

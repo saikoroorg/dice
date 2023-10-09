@@ -82,8 +82,8 @@ pico.Touch = class {
 				this.panel.width = pico.Touch.width;
 				this.panel.height = pico.Touch.height;
 				this.panel.style.display = "flex";
-				if (parent && document.getElementById(parent)) {
-					document.getElementById(parent).appendChild(this.panel);
+				if (parent && document.getElementByClassName(parent)[0]) {
+					document.getElementByClassName(parent)[0].appendChild(this.panel);
 				} else {
 					document.body.appendChild(this.panel);
 					parent = document.body;
