@@ -64,6 +64,7 @@ var pico = pico || {};
 
 // Sound class.
 pico.Sound = class {
+	static debug = false; // Debug print.
 	static volume = 0.1; // Master volume.
 	static frequency = 440; // Master frequency.
 
@@ -88,10 +89,10 @@ pico.Sound = class {
 		return new Promise(async (resolve) => {
 			for (let i = 0; i < repeat || repeat <= 0; i++) {
 				for (let j = 0; j < kcents.length; j++) {
-					console.log("Pulse melody: " + i + "/" + repeat + ":" + j + "/" + kcents.length);
+					this._debug("Pulse melody: " + i + "/" + repeat + ":" + j + "/" + kcents.length);
 					await this._pulse(kcents[j], length, pattern);
 					if (this.stopped) {
-						console.log("Pulse melody End.");
+						this._debug("Pulse melody End.");
 						resolve();
 					}
 				}
@@ -104,10 +105,10 @@ pico.Sound = class {
 		return new Promise(async (resolve) => {
 			for (let i = 0; i < repeat || repeat <= 0; i++) {
 				for (let j = 0; j < kcents.length; j++) {
-					console.log("Triangle melody: " + i + "/" + repeat + ":" + j + "/" + kcents.length);
+					this._debug("Triangle melody: " + i + "/" + repeat + ":" + j + "/" + kcents.length);
 					await this._triangle(kcents[j], length, pattern);
 					if (this.stopped) {
-						console.log("Triangle melody End.");
+						this._debug("Triangle melody End.");
 						resolve();
 					}
 				}
@@ -145,13 +146,20 @@ pico.Sound = class {
 		});
 	}
 
+	// Debug print.
+	_debug(text) {
+		if (pico.Sound.debug) {
+			console.log(text);
+		}
+	}
+
 	// Setup sound.
 	_setup() {
 		return new Promise((resolve) => {
 
 			// Create audio.
 			if (this.context == null) {
-				console.log("Create audio.");
+				this._debug("Create audio.");
 				this.context = new window.AudioContext();
 				this.master = this.context.createGain();
 				//this.master.gain.value = pico.Sound.volume;
@@ -161,7 +169,7 @@ pico.Sound = class {
 
 				// Close audio.
 				this.oscillator.onended = () => {
-					console.log("Close audio.");
+					this._debug("Close audio.");
 					this.master.gain.value = 0;
 					this.master.disconnect(this.context.destination);
 					this.context.close();
@@ -177,18 +185,18 @@ pico.Sound = class {
 	// Stop sound.
 	_stop() {
 		if (this.context == null) {
-			console.log("No audio.");
+			this._debug("No audio.");
 			return Promise.reject();
 		} else if (!this.started) {
-			console.log("Not started.");
+			this._debug("Not started.");
 			return Promise.resolve();
 		}
 
 		// Stop audio.
 		let restTime = this.endTime - Date.now();
-		console.log("Stop: " + restTime);
+		this._debug("Stop: " + restTime);
 		if (restTime >= 0) {
-			//console.log("Disconnect.")
+			//this._debug("Disconnect.")
 			this.master.gain.value = 0;
 			//this.oscillator.disconnect(this.master);
 			this.stopped = true; // Wait for end on start function.
@@ -199,10 +207,10 @@ pico.Sound = class {
 	// Ready to start sound.
 	_ready() {
 		if (this.context == null) {
-			console.log("No audio.");
+			this._debug("No audio.");
 			return Promise.reject();
 		//} else if (!this.started) {
-		//	console.log("Not started.");
+		//	this._debug("Not started.");
 		//	return Promise.resolve();
 		}
 		return Promise.resolve();
@@ -211,10 +219,10 @@ pico.Sound = class {
 		return new Promise((resolve) => {
 			let restTime = this.endTime - Date.now();
 			if (restTime > 0) {
-				console.log("Wait for previous end: " + restTime);
+				this._debug("Wait for previous end: " + restTime);
 				setTimeout(resolve, restTime);
 			} else {
-				console.log("Ready: " + restTime);
+				this._debug("Ready: " + restTime);
 				resolve();
 			}
 		}); // end of new Promise.
@@ -224,10 +232,10 @@ pico.Sound = class {
 	// Play sound.
 	_play(type=null, kcents=[0], length=0.1, delay=0, volume=1) {
 		if (this.context == null) {
-			console.log("No audio.");
+			this._debug("No audio.");
 			return Promise.reject();
 		} else if (this.endTime < 0 || this.endTime > Date.now() + delay * 1000) {
-			console.log("Not end previous sound.");
+			this._debug("Not end previous sound.");
 			return Promise.resolve();
 		}
 
@@ -236,7 +244,7 @@ pico.Sound = class {
 			return new Promise((resolve) => {
 
 				// Wait to play.
-				console.log("Wait to play: " + Date.now() + " -> " + this.endTime);
+				this._debug("Wait to play: " + Date.now() + " -> " + this.endTime);
 				//let endTime = Date.now() + length * 1000 + delay * 1000;
 				//this.endTime = endTime > this.endTime ? endTime : this.endTime;
 				this.endTime = Date.now() + length * 1000 + delay * 1000;
@@ -244,12 +252,12 @@ pico.Sound = class {
 				setTimeout(() => {
 
 					// Play sound.
-					console.log("Play: " + kcents + " x " + length * kcents.length + " + " + delay);
+					this._debug("Play: " + kcents + " x " + length * kcents.length + " + " + delay);
 					if (type) {
 
 						// Connect.
 						let startTime = Date.now();
-						console.log("Connect: " + startTime)
+						this._debug("Connect: " + startTime)
 						this.oscillator.type = type;
 						for (let i = 0; i < kcents.length; i++) {
 							this.oscillator.detune.setValueAtTime(kcents[i] * 1000, this.context.currentTime + length * i);
@@ -259,7 +267,7 @@ pico.Sound = class {
 						// Set volume and start audio.
 						this.master.gain.value = pico.Sound.volume * volume;
 						if (!this.started) {
-							console.log("Start audio.");
+							this._debug("Start audio.");
 							this.oscillator.start();
 							this.started = true;
 						}
@@ -267,18 +275,18 @@ pico.Sound = class {
 						// Wait to end.
 						setTimeout(() => {
 							/*if (this.stopped) { // Stopped on stop function.
-								console.log("Stopped.");
+								this._debug("Stopped.");
 								//this.endTime = 0;
 							} else {*/
 								// End.
-								console.log("End: " + kcents + " x " + length * kcents.length);
+								this._debug("End: " + kcents + " x " + length * kcents.length);
 								//if (type) {
-								//	console.log("EndTime: " + Date.now() + " -> " + this.endTime);
+								//	this._debug("EndTime: " + Date.now() + " -> " + this.endTime);
 									this.master.gain.value = 0;
 
 									// Disconnect.
 									if (Date.now() >= this.endTime) {
-										console.log("Disconnect: " + startTime)
+										this._debug("Disconnect: " + startTime)
 										this.oscillator.disconnect(this.master);
 										//this.endTime = 0;
 									}
@@ -295,10 +303,10 @@ pico.Sound = class {
 						// Wait to end.
 						setTimeout(() => {
 							//if (this.stopped) { // Stopped on stop function.
-							//	console.log("Stopped.");
+							//	this._debug("Stopped.");
 							//} else {
 								// End.
-								console.log("End: " + kcents + " x " + length * kcents.length);
+								this._debug("End: " + kcents + " x " + length * kcents.length);
 								this.master.gain.value = 0;
 							//}
 							resolve();
@@ -312,10 +320,10 @@ pico.Sound = class {
 	// Start pulse sound.
 	_pulse(kcent=0, length=0.1, pattern=0, volume=1) {
 		if (this.context == null) {
-			console.log("No audio.");
+			this._debug("No audio.");
 			return Promise.reject();
 		}
-		console.log("Pulse" + pattern + ": " + kcent + " x " + length);
+		this._debug("Pulse" + pattern + ": " + kcent + " x " + length);
 
 		// 8bit original argorithm and parameter: pattern=0.125,0.25,0.5
 		if (pattern > 0) {
@@ -332,7 +340,7 @@ pico.Sound = class {
 			// Connect pulse filters to master volume.
 			this.oscillator.connect(pulseFilters[0]).connect(pulseFilters[1]).connect(this.master);
 			setTimeout(() => {
-				console.log("Disconnect pulse filters.");
+				this._debug("Disconnect pulse filters.");
 				this.oscillator.disconnect(pulseFilters[0]);
 				pulseFilters[0].disconnect(pulseFilters[1]);
 				pulseFilters[0] = null;
@@ -354,10 +362,10 @@ pico.Sound = class {
 	// Start triangle sound.
 	_triangle(kcent=0, length=0.1, pattern=0, volume=1) {
 		if (this.context == null) {
-			console.log("No audio.");
+			this._debug("No audio.");
 			return Promise.reject();
 		}
-		console.log("Triangle" + pattern + ": " + kcent + " x " + length);
+		this._debug("Triangle" + pattern + ": " + kcent + " x " + length);
 
 		// 8bit original argorithm and parameter: pattern=16
 		if (pattern > 0) {
@@ -390,7 +398,7 @@ pico.Sound = class {
 					buffering[i] = Math.ceil(value * pattern) / pattern;
 				}
 				//if (!Math.floor(i % 100)) {
-				//	console.log("buffering" + i + ": " + value + " -> " + buffering[i]);
+				//	this._debug("buffering" + i + ": " + value + " -> " + buffering[i]);
 				//}
 			}
 
@@ -401,7 +409,7 @@ pico.Sound = class {
 			triangleGenerator.connect(this.master);
 			triangleGenerator.start();
 			setTimeout(() => {
-				console.log("Disconnect triangle generator.");
+				this._debug("Disconnect triangle generator.");
 				triangleGenerator.disconnect(this.master);
 				triangleGenerator = null;
 				triangleBuffer = null;
@@ -421,13 +429,13 @@ pico.Sound = class {
 	// Start noise sound.
 	_noise(length=0.1, pattern=0, delay=0, volume=1) {
 		if (this.context == null) {
-			console.log("No audio.");
+			this._debug("No audio.");
 			return Promise.reject();
 		}/* else if (this.endTime < 0 || this.endTime > Date.now() + delay * 1000) {
-			console.log("Not end previous sound.");
+			this._debug("Not end previous sound.");
 			return Promise.resolve();
 		}*/
-		console.log("Noise" + pattern + ": " + length + " + " + delay);
+		this._debug("Noise" + pattern + ": " + length + " + " + delay);
 		setTimeout(() => {
 
 			// Create noise buffers.
@@ -463,7 +471,7 @@ pico.Sound = class {
 			noiseGenerator.connect(this.master);
 			noiseGenerator.start();
 			setTimeout(() => {
-				console.log("Disconnect noise generator.");
+				this._debug("Disconnect noise generator.");
 				noiseGenerator.disconnect(this.master);
 				noiseGenerator = null;
 				noiseBuffer = null;

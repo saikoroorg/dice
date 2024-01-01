@@ -1,10 +1,10 @@
 {
-	"name": "dice",
-	"short_name": "Dice",
+	"name": "pico",
+	"short_name": "Pico",
 	"version": "0.9.40101",
 	"author": "saikoro.org",
-	"background_color": "#eee",
-	"theme_color": "#eee",
+	"background_color": "#fff",
+	"theme_color": "#fff",
 	"icons": [{
 		"src": "./icon.png",
 		"sizes": "192x192",
@@ -17,5 +17,5 @@
 	}],
 	"display": "standalone",
 	"start_url": "./?v=1",
-	"contents": ["./", "./pico/", "./pico/daemon.js", "./pico/image.js", "./pico/param.js", "./pico/sound.js", "./pico/touch.js"]
+	"contents": ["./", "./bros.html", "./image.js", "./param.js", "./sound.js", "./touch.js"]
 }

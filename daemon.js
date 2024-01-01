@@ -7,6 +7,7 @@ var pico = pico || {};
 
 // Worker class.
 pico.Worker = class {
+	static debug = true; // Debug print.
 	static script = "./daemon.js"; // This script file.
 	static manifest = "./manifest.json"; // Manifest file.
 
@@ -19,27 +20,34 @@ pico.Worker = class {
 		this.cacheName = null; // Cache key without version.
 	}
 
+	// Debug print.
+	_debug(text) {
+		if (pico.Worker.debug) {
+			console.log(text);
+		}
+	}
+
 	// Get file from cache or fetch.
 	_cacheOrFetch(url, cacheKey, replacing) {
 		return new Promise((resolve, reject) => {
 			if (cacheKey) {
 
 				// Get cached file.
-				console.log("Get cached file: " + url + " from " + cacheKey);
+				this._debug("Get cached file: " + url + " from " + cacheKey);
 				self.caches.open(cacheKey).then((cache) => {
 					cache.match(url, {ignoreSearch: true}).then((result) => {
 
 						// Resolves by cached response.
-						console.log("Resolves by cached response: " + url + " -> " + result.status + " " + result.statusText);
+						this._debug("Resolves by cached response: " + url + " -> " + result.status + " " + result.statusText);
 						resolve(result);
 					}).catch((error) => {
 
 						// Not found cached file.
-						console.log("Not found cached file: " + url);
+						this._debug("Not found cached file: " + url);
 						this._fetchAndCache(url, cacheKey, replacing).then((result) => {
 
 							// Resolves by fetched response.
-							console.log("Resolves by fetched response: " + url + " -> " + result.status + " " + result.statusText);
+							this._debug("Resolves by fetched response: " + url + " -> " + result.status + " " + result.statusText);
 							resolve(result);
 						});
 					});
@@ -48,11 +56,11 @@ pico.Worker = class {
 			} else {
 
 				// No cache.
-				console.log("No cache: " + url);
+				this._debug("No cache: " + url);
 				fetch(url).then((result) => {
 
 					// Resolves by fetched response.
-					console.log("Resolves by fetched response: " + url + " -> " + result.status + " " + result.statusText);
+					this._debug("Resolves by fetched response: " + url + " -> " + result.status + " " + result.statusText);
 					resolve(result);
 				});
 			}
@@ -64,35 +72,37 @@ pico.Worker = class {
 		return fetch(url, {cache: "no-store"}).then((result) => {
 
 			// Cache the fetched file.
-			console.log("Fetched file: " + url + " -> " + result.status + " " + result.statusText);
+			this._debug("Fetched file: " + url + " -> " + result.status + " " + result.statusText);
 			let contentType = result.headers.get("Content-Type");
 			if (!contentType.match("text/html")) {
 				if (cacheKey) {
-					console.log("Cache the fetched file: " + url + " to " + cacheKey + " -> " + result.status + " " + result.statusText);
+					this._debug("Cache the fetched file: " + url + " to " + cacheKey + " -> " + result.status + " " + result.statusText);
 					self.caches.open(cacheKey).then((cache) => {
 						cache.put(url, result.clone());
 					});
 				}
 
 				// Returns fetched response.
-				console.log("Returns fetched response. -> " + result.status + " " + result.statusText);
+				this._debug("Returns fetched response. -> " + result.status + " " + result.statusText);
 				return result.clone();
 
 			// Replace fetched html file.
 			} else {
 				return new Promise((resolve, reject) => {
 					result.text().then((text) => {
-						console.log("Fetched html file: " + text.replace(/\s+/g, " ").substr(-1000));
+						this._debug("Fetched html file: " + text.replace(/\s+/g, " ").substr(-1000));
 
 						// Replace strings by manifest.
 						for (let key in replacing) {
-							console.log("Replacing: " + key + " -> " + replacing[key]);
+							this._debug("Replacing: " + key + " -> " + replacing[key]);
 							let reg1 = new RegExp("(<.*id=\"" + key + "\".*>).*(<\/.*>)");
 							text = text.replace(reg1, "$1" + replacing[key] + "$2");
 							let reg2 = new RegExp("(<" + key + ".*>).*(<\/" + key + ".*>)");
 							text = text.replace(reg2, "$1" + replacing[key] + "$2");
 						}
-						console.log("Replaced file: " + text.replace(/\s+/g, " ").substr(-1000));
+						let reg0 = new RegExp("\/index.html");
+						text = text.replace(reg0, "\/");
+						this._debug("Replaced file: " + text.replace(/\s+/g, " ").substr(-1000));
 
 						// Replaced responce.
 						let options = {status: result.status,
@@ -102,14 +112,14 @@ pico.Worker = class {
 
 						// Cache the replaced file.
 						if (cacheKey) {
-							console.log("Cache the replaced file: " + url + " to " + cacheKey + " -> " + result.status + " " + result.statusText);
+							this._debug("Cache the replaced file: " + url + " to " + cacheKey + " -> " + result.status + " " + result.statusText);
 							self.caches.open(cacheKey).then((cache) => {
 								cache.put(url, result.clone());
 							});
 						}
 
 						// Resolves by replaced response.
-						console.log("Resolves by replaced response: " + url + " -> " + result.status + " " + result.statusText);
+						this._debug("Resolves by replaced response: " + url + " -> " + result.status + " " + result.statusText);
 						resolve(result.clone());
 					});
 				}); // end of new Promise.
@@ -120,57 +130,57 @@ pico.Worker = class {
 	// Prefetch all content files to renew.
 	_renew() {
 		return new Promise((resolve, reject) => {
-			console.log("Renew worker.");
+			this._debug("Renew worker.");
 
 			// Fetch new manifest file.
 			let url = pico.Worker.manifest;
-			console.log("Fetch new manifest: " + url);
+			this._debug("Fetch new manifest: " + url);
 			return fetch(url, {cache: "no-store"}).then((result) => {
 
 				// Check countent type.
 				let contentType = result.headers.get("Content-Type");
 				if (!contentType.match("application/json")) {
-					console.log("Failed to parse manifest file.");
+					this._debug("Failed to parse manifest file.");
 					reject();
 					return;
 				}
 
 				// Parse manifest json.
 				result.clone().json().then((manifest) => {
-					console.log("Parsed new manifest json: " + JSON.stringify(manifest));
+					this._debug("Parsed new manifest json: " + JSON.stringify(manifest));
 					let cacheKey = manifest.name + "/" + manifest.version;
 					let replacing = this._replacing(manifest);
 
 					// Not found new version.
 					if (cacheKey == this.cacheKey) {
-						console.log("Not found new version: " + cacheKey);
+						this._debug("Not found new version: " + cacheKey);
 						resolve(result.clone());
 
 					// Found new version.
 					} else {
-						console.log("Found new version: " + cacheKey + " old: " + this.cacheKey);
+						this._debug("Found new version: " + cacheKey + " old: " + this.cacheKey);
 
 						// Prefetch and cache all content files.
-						console.log("Prefetch all content files.");
+						this._debug("Prefetch all content files.");
 						Promise.all(manifest.contents.map((content) => {
 							return this._fetchAndCache(content, cacheKey, replacing);
 						})).then(() => { // end of Promise.all.
 
 							// Cache new manifest.
 							cacheKey = "*";
-							console.log("Cache new manifest: " + url + " to " + cacheKey + " -> " + result.status + " " + result.statusText);
+							this._debug("Cache new manifest: " + url + " to " + cacheKey + " -> " + result.status + " " + result.statusText);
 							self.caches.open(cacheKey).then((cache) => {
 								cache.put(url, result.clone());
 
 								// Resolves.
-								console.log("Renew worker completed.");
+								this._debug("Renew worker completed.");
 								resolve(result.clone());
 							});
 						});
 					}
 				});
 			}).catch((error) => {
-				console.log("Failed to parse manifest file.");
+				this._debug("Failed to parse manifest file.");
 				console.error(error.name, error.message);
 				reject();
 			});
@@ -180,40 +190,40 @@ pico.Worker = class {
 	// Check new manifest file.
 	_check() {
 		return new Promise((resolve, reject) => {
-			console.log("Check new maniefst file.");
+			this._debug("Check new maniefst file.");
 
 			// Fetch new manifest file.
 			let url = pico.Worker.manifest;
-			console.log("Fetch new manifest: " + url);
+			this._debug("Fetch new manifest: " + url);
 			return fetch(url, {cache: "no-store"}).then((result) => {
 
 				// Check countent type.
 				let contentType = result.headers.get("Content-Type");
 				if (!contentType.match("application/json")) {
-					console.log("Failed to parse manifest file.");
+					this._debug("Failed to parse manifest file.");
 					reject();
 					return;
 				}
 
 				// Parse manifest json.
 				result.clone().json().then((manifest) => {
-					console.log("Parsed new manifest json: " + JSON.stringify(manifest));
+					this._debug("Parsed new manifest json: " + JSON.stringify(manifest));
 					let cacheKey = manifest.name + "/" + manifest.version;
 					let replacing = this._replacing(manifest);
 
 					// Not found new version.
 					if (cacheKey == this.cacheKey) {
-						console.log("Not found new version: " + cacheKey);
+						this._debug("Not found new version: " + cacheKey);
 						resolve(result.clone());
 
 					// Found new version.
 					} else {
-						console.log("Found new version: " + cacheKey + " old: " + this.cacheKey);
+						this._debug("Found new version: " + cacheKey + " old: " + this.cacheKey);
 						reject();
 					}
 				});
 			}).catch((error) => {
-				console.log("Failed to fetch manifest file.");
+				this._debug("Failed to fetch manifest file.");
 				console.error(error.name, error.message);
 				reject();
 			});
@@ -236,29 +246,29 @@ pico.Worker = class {
 		if (manifest.short_name) {
 			replacing.title = manifest.short_name;
 		}
-		console.log("Created replacing table: " + JSON.stringify(replacing));
+		this._debug("Created replacing table: " + JSON.stringify(replacing));
 		return replacing;
 	}
 
 	// Set manifest file to start worker.
 	_start(result) {
 		if (this.cacheKey) {
-			console.log("Worker already started.");
+			this._debug("Worker already started.");
 			return Promise.resolve();
 		}
 		return new Promise((resolve, reject) => {
-			console.log("Start worker.");
+			this._debug("Start worker.");
 
 			// Get cached manifest file.
 			let url = pico.Worker.manifest, cacheKey = "*";
-			console.log("Get cached manifest file: " + url + " from " + cacheKey);
+			this._debug("Get cached manifest file: " + url + " from " + cacheKey);
 			self.caches.open(cacheKey).then((cache) => {
 				cache.match(url, {ignoreSearch: true}).then((result) => {
-					console.log("Found manifest file: " + url + " from " + cacheKey);
+					this._debug("Found manifest file: " + url + " from " + cacheKey);
 
 					// Check result.
 					if (!result) {
-						console.log("Failed to get manifest file.");
+						this._debug("Failed to get manifest file.");
 						reject();
 						return;
 					}
@@ -266,29 +276,29 @@ pico.Worker = class {
 					// Check countent type.
 					let contentType = result.headers.get("Content-Type");
 					if (!contentType.match("application/json")) {
-						console.log("Failed to parse manifest file.");
+						this._debug("Failed to parse manifest file.");
 						reject();
 						return;
 					}
 
 					// Parse manifest json.
 					result.clone().json().then((manifest) => {
-						console.log("Parsed manifest json: " + JSON.stringify(manifest));
+						this._debug("Parsed manifest json: " + JSON.stringify(manifest));
 
 						// Set version and cache key.
 						this.cacheKey = manifest.name + "/" + manifest.version;
 						this.cacheName = manifest.name;
-						console.log("Set version: " + this.cacheKey);
+						this._debug("Set version: " + this.cacheKey);
 
 						// Set replacing table.
 						this.replacing = this._replacing(manifest);
 
 						// Resolves.
-						console.log("Start worker completed.");
+						this._debug("Start worker completed.");
 						resolve(result.clone());
 					});
 				}).catch((error) => {
-					console.log("Failed to parse manifest file.");
+					this._debug("Failed to parse manifest file.");
 					console.error(error.name, error.message);
 					reject();
 				});
@@ -302,18 +312,18 @@ pico.Worker = class {
 
 			// Check manifest file to use cache.
 			this._check().then((result) => {
-				console.log("Worker already installed.");
+				this._debug("Worker already installed.");
 				resolve(result);
 			}).catch((error) => {
-				console.log("Reinstall worker.");
+				this._debug("Reinstall worker.");
 
 				// Refetch manifest file.
 				let url = pico.Worker.manifest, cacheKey = "*", replacing = null;
-				console.log("Refetch manifest file: " + url);
+				this._debug("Refetch manifest file: " + url);
 				this._fetchAndCache(url, cacheKey, replacing).then((result) => {
 
 					// Resolves.
-					console.log("Install worker completed.");
+					this._debug("Install worker completed.");
 					resolve(result);
 
 					// Prefetch all content files on background for this install.
@@ -321,7 +331,7 @@ pico.Worker = class {
 				}).catch((error) => {
 
 					// Failed but resolves to continue worker.
-					console.log("Failed to install worker.");
+					this._debug("Failed to install worker.");
 					resolve();
 				});
 			});
@@ -337,30 +347,30 @@ pico.Worker = class {
 
 				// Check cache name.
 				if (!this.cacheName) {
-					console.log("Failed to get manifest file.");
+					this._debug("Failed to get manifest file.");
 					reject();
 					return;
 				}
 
 				// Delete all cache files.
-				console.log("Delete all cache files: " + this.cacheName);
+				this._debug("Delete all cache files: " + this.cacheName);
 				self.caches.keys().then((keys) => {
 					Promise.all(keys.map((key) => {
 						if (!key.indexOf(this.cacheName) && key != this.cacheKey) {
-							console.log("Delete old cache: " + key);
+							this._debug("Delete old cache: " + key);
 							return self.caches.delete(key);
 						}
 					})).then(() => { // end of Promise.all.
 
 						// Resolves.
-						console.log("Delete all cache files completed.");
+						this._debug("Delete all cache files completed.");
 						resolve();
 					});
 				});
 			}).catch((error) => {
 
 				// Failed but resolves to continue worker.
-				console.log("Failed to activate worker.");
+				this._debug("Failed to activate worker.");
 				resolve();
 			});
 		}); // end of new Promise.
@@ -374,11 +384,11 @@ pico.Worker = class {
 			this._start().then(() => {
 
 				// Get cache or fetch and return response.
-				console.log("Get cache or fetch");
+				this._debug("Get cache or fetch");
 				this._cacheOrFetch(url, this.cacheKey, this.replacing).then((result) => {
 
 					// Resolves.
-					console.log("Fetch by worker completed: " + url + " -> " + result.status + " " + result.statusText);
+					this._debug("Fetch by worker completed: " + url + " -> " + result.status + " " + result.statusText);
 					resolve(result);
 
 					// Prefetch all content files on background for next install.
@@ -386,7 +396,7 @@ pico.Worker = class {
 				}).catch((error) => {
 
 					// Failed but resolves to continue worker.
-					console.log("Failed to fetch by worker.");
+					this._debug("Failed to fetch by worker.");
 					resolve(fetch(url)); // Simple fetch.
 				});
 			});
@@ -404,12 +414,12 @@ if (!self || !self.registration) {
 		// Register worker.
 		if (pico.Worker.script) {
 			if (navigator.serviceWorker) {
-				console.log("Register worker: " + pico.Worker.script);
+				pico.worker._debug("Register worker: " + pico.Worker.script);
 				(async()=>{
 					await navigator.serviceWorker.register(pico.Worker.script);
 				})();
 			} else {
-				console.log("No worker.");
+				pico.worker._debug("No worker.");
 			}
 		}
 
@@ -417,10 +427,10 @@ if (!self || !self.registration) {
 		// Not work on iOS 16 PWA.
 		// https://bugs.webkit.org/show_bug.cgi?id=254545
 		if (navigator.wakeLock) {
-			console.log("Request wake lock.");
+			pico.worker._debug("Request wake lock.");
 			navigator.wakeLock.request("screen");
 		} else {
-			console.log("No wake lock.");
+			pico.worker._debug("No wake lock.");
 		}
 
 	} catch (error) {
@@ -432,19 +442,19 @@ if (!self || !self.registration) {
 
 	// Event on installing worker.
 	self.addEventListener("install", (event) => {
-		console.log("Install worker: " + pico.Worker.script);
+		pico.worker._debug("Install worker: " + pico.Worker.script);
 		event.waitUntil(pico.worker.install());
 	});
 
 	// Event on activating worker.
 	self.addEventListener("activate", (event) => {
-		console.log("Activate worker: " + pico.Worker.script);
+		pico.worker._debug("Activate worker: " + pico.Worker.script);
 		event.waitUntil(pico.worker.activate());
 	});
 
 	// Event on fetching network request.
 	self.addEventListener("fetch", (event) => {
-		console.log("Fetch by worker: " + event.request.url);
+		pico.worker._debug("Fetch by worker: " + event.request.url);
 		event.respondWith(pico.worker.fetch(event.request.url));
 	});
 }
