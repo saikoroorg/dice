@@ -176,11 +176,11 @@ async function menuAction() {
 		}
 
 		// Enter to edit mode.
-		picoSetStrings("..", "u");
+		picoSetStrings("../index.html", "u");
 		if (appver > 0) {
 			picoSetStrings(appver, "v");
 		}
-		await picoReload("pico");
+		await picoReload("pico/index.html");
 
 	// Start sharing.
 	} else if (result > 0) {

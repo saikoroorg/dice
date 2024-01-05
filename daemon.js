@@ -95,12 +95,12 @@ pico.Worker = class {
 						// Replace strings by manifest.
 						for (let key in replacing) {
 							this._debug("Replacing: " + key + " -> " + replacing[key]);
-							let reg1 = new RegExp("(<.*id=\"" + key + "\".*>).*(<\/.*>)");
+							let reg1 = new RegExp("(<.*id=\"" + key + "\".*>).*(<\/.*>)", "g");
 							text = text.replace(reg1, "$1" + replacing[key] + "$2");
-							let reg2 = new RegExp("(<" + key + ".*>).*(<\/" + key + ".*>)");
+							let reg2 = new RegExp("(<" + key + ".*>).*(<\/" + key + ".*>)", "g");
 							text = text.replace(reg2, "$1" + replacing[key] + "$2");
 						}
-						let reg0 = new RegExp("\/index.html");
+						let reg0 = new RegExp("\/index.html", "g");
 						text = text.replace(reg0, "\/");
 						this._debug("Replaced file: " + text.replace(/\s+/g, " ").substr(-1000));
 
