@@ -122,17 +122,15 @@ function updateMenu(id, enable, text=null, icon=null) {
 async function updateButtons() {
 	if (custom) {
 		updateMenu("action", true, "*");
-		updateMenu("minus", true, maximum > 1 ? "<" : " ");
-		updateMenu("plus", true, maximum < maxmaximum ? ">" : " ");
+		//updateMenu("minus", true, maximum > 1 ? "<" : " ");
+		//updateMenu("plus", true, maximum < maxmaximum ? ">" : " ");
+	} else if (count > 0 && result > 0) {
+		updateMenu("action", true, "^");
 	} else {
-		if (count > 0 && result > 0) {
-			updateMenu("action", true, "^");
-		} else {
-			updateMenu("action", false);
-		}
-		updateMenu("minus", true, count > 1 ? "-" : " ");
-		updateMenu("plus", true, count < maxcount ? "+" : " ");
+		updateMenu("action", false);
 	}
+	updateMenu("minus", true, count > 1 ? "-" : " ");
+	updateMenu("plus", true, count < maxcount ? "+" : " ");
 	if (pixels.length > 0) {
 		let data = await picoSpriteData(pixels[maximum - 1], colors);
 		updateMenu("select", true, null, data);
@@ -207,7 +205,7 @@ async function menuSelect(x) {
 	if (x) {
 
 		// Change Maximum of dice faces.
-		if (custom) {
+		/*if (custom) {
 			if ((x > 0 && maximum + x <= maxmaximum) || (x < 0 && maximum + x > 0)) {
 				maximum = maximum + x;
 				result = 0;
@@ -219,7 +217,7 @@ async function menuSelect(x) {
 			picoFlush();
 
 		// Change count of dice.
-		} else {
+		} else {*/
 			if ((x > 0 && count + x <= maxcount) || (x < 0 && count + x > 0)) {
 				count = count + x;
 				rolling = -1; // Reroll.
@@ -230,11 +228,24 @@ async function menuSelect(x) {
 			}
 			updateButtons();
 			picoFlush();
-		}
+		//}
 
 	// Switch custom flag.
+	} else if (!custom) {
+		custom = true;
+		rolling = -1; // Reroll.
+		result = 0;
+		picoBeep(1.2, 0.1);
+		updateButtons();
+		picoFlush();
+
+	// Do nothing.
+	} else if (pixels.length > 0) {
+		picoBeep(-1.2, 0.1);
+
+	// Change maximum of dice faces.
 	} else {
-		custom = custom ? false : true;
+		maximum = maximum < 8 ? 8 : maximum < 10 ? 10 : 6;
 		rolling = -1; // Reroll.
 		result = 0;
 		picoBeep(1.2, 0.1);
@@ -392,7 +403,7 @@ async function main() {
 			if (custom) {
 
 				// Draw maximum count.
-				let x0 = 0, y0 = -80, c0 = 0, s0 = 1;
+				let x0 = 0, y0 = 50, c0 = -1, s0 = 2;
 				/*if (!holding) { // Ignore after holding.
 					if (picoAction(x0-30, y0, 30, 20)) {
 						maximum = maximum - 1 >= 1 ? maximum - 1 : 1;
@@ -408,7 +419,8 @@ async function main() {
 						picoChar("+", -1, x0+44, y0, 0, s0);
 					}
 				}*/
-				picoChar(maximum + "/" + maxmaximum, c0, x0, y0, 0, s0);
+				//picoChar(maximum + "/" + maxmaximum, c0, x0, y0, 0, s0);
+				picoChar("*" + count, c0, x0, y0, 0, s0);
 
 				// Draw icon.
 				let x1 = 0, y1 = 0, s1 = 10, w1 = 32;
@@ -423,6 +435,7 @@ async function main() {
 					}
 				}
 				if (pixels.length > 0) {
+					s1 = s1 * 7 / picoSpriteSize(pixels[maximum - 1]);
 					picoSprite(pixels[maximum - 1], 0, x1, y1, 0, s1);
 				} else if (maximum <= 9) {
 					picoSprite(dots[maximum - 1], 0, x1, y1, 0, s1);

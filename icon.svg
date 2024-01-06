@@ -1,14 +1,48 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="300" height="300">
+<!--svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="300" height="300">
 	<g stroke-width="2" stroke="none" fill="#000" transform="translate(2,2)">
 		<path d="M0,0h16v16h-16Z" stroke="#000" fill="#fff"/>
 		<path d="M3,3h2v2h-2ZM11,3h2v2h-2ZM3,7h2v2h-2ZM11,7h2v2h-2ZM3,11h2v2h-2ZM11,11h2v2h-2Z"/>
 	</g>
-</svg>
+</svg!-->
 <!-- qlmanage -t -s 192 -o ./ icon.svg -or- inkscape -z -o icon.png -w 192 -h 192 icon.svg -->
 <!--svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="384" height="384">
 	<path d="M0,0h32v32h-32Z" fill="#eee"/>
 	<g stroke-width="2" stroke="none" fill="#000" transform="translate(8,8)">
 		<path d="M0,0h16v16h-16Z" stroke="#000" fill="#fff"/>
+		<path d="M3,3h2v2h-2ZM11,3h2v2h-2ZM3,7h2v2h-2ZM11,7h2v2h-2ZM3,11h2v2h-2ZM11,11h2v2h-2Z"/>
+	</g>
+</svg!-->
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8" width="300" height="300">
+	<g strocke-width="2" stroke="#fff" fill="#fff" transform="translate(3.5,3.5)">
+		<path d="M-3,-3h7v7h-7Z"/>
+	</g>
+	<g strocke-width="2" stroke="none" fill="#BFBFBF" transform="translate(3.5,3.5)">
+		<path d="M-4,-3h1v1h-1Z M-4,-1h1v1h-1Z M-4,1h1v1h-1Z M-4,3h1v1h-1Z"/>
+		<path d="M-3,-4h1v1h-1Z M-1,-4h1v1h-1Z M1,-4h1v1h-1Z M3,-4h1v1h-1Z"/>
+		<path d="M-3,4h1v1h-1Z M-1,4h1v1h-1Z M1,4h1v1h-1Z M3,4h1v1h-1Z"/>
+		<path d="M4,-3h1v1h-1Z M4,-1h1v1h-1Z M4,1h1v1h-1Z M4,3h1v1h-1Z"/>
+	</g>
+	<g stroke-width="2" stroke="none" fill="#000" transform="scale(0.5) translate(0,0)">
+		<path d="M3,3h2v2h-2ZM11,3h2v2h-2ZM3,7h2v2h-2ZM11,7h2v2h-2ZM3,11h2v2h-2ZM11,11h2v2h-2Z"/>
+	</g>
+</svg>
+<!-- qlmanage -t -s 192 -o ./ icon.svg -or- inkscape -z -o icon.png -w 192 -h 192 icon.svg -->
+<!--svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10" width="384" height="384">
+	<g strocke-width="2" stroke="#fff" fill="#fff" transform="translate(4.5,4.5)">
+		<path d="M-4,-4h9v9h-9Z"/>
+	</g>
+	<g strocke-width="2" stroke="none" fill="#BFBFBF" transform="translate(4.5,4.5)">
+		<path d="M-4,-3h1v1h-1Z M-4,-1h1v1h-1Z M-4,1h1v1h-1Z M-4,3h1v1h-1Z"/>
+		<path d="M-3,-4h1v1h-1Z M-1,-4h1v1h-1Z M1,-4h1v1h-1Z M3,-4h1v1h-1Z"/>
+		<path d="M-3,4h1v1h-1Z M-1,4h1v1h-1Z M1,4h1v1h-1Z M3,4h1v1h-1Z"/>
+		<path d="M4,-3h1v1h-1Z M4,-1h1v1h-1Z M4,1h1v1h-1Z M4,3h1v1h-1Z"/>
+		<path d="M-4,-5h1v1h-1Z M-2,-5h1v1h-1Z M0,-5h1v1h-1Z M2,-5h1v1h-1Z M4,-5h1v1h-1Z"/>
+		<path d="M-4,5h1v1h-1Z M-2,5h1v1h-1Z M0,5h1v1h-1Z M2,5h1v1h-1Z M4,5h1v1h-1Z"/>
+		<path d="M-5,-4h1v1h-1Z M-5,-2h1v1h-1Z M-5,0h1v1h-1Z M-5,2h1v1h-1Z M-5,4h1v1h-1Z"/>
+		<path d="M5,-2h1v1h-1Z M5,-4h1v1h-1Z M5,0h1v1h-1Z M5,2h1v1h-1Z M5,4h1v1h-1Z"/>
+	</g>
+	<g stroke-width="2" stroke="none" fill="#000" transform="scale(0.5) translate(2,2)">
 		<path d="M3,3h2v2h-2ZM11,3h2v2h-2ZM3,7h2v2h-2ZM11,7h2v2h-2ZM3,11h2v2h-2ZM11,11h2v2h-2Z"/>
 	</g>
 </svg!-->
