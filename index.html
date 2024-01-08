@@ -230,21 +230,16 @@ async function menuSelect(x) {
 			picoFlush();
 		//}
 
-	// Switch custom flag.
-	} else if (!custom) {
+	// Do nothing on customize dice.
+	} else if (pixels.length > 0) {
 		custom = true;
-		rolling = -1; // Reroll.
-		result = 0;
-		picoBeep(1.2, 0.1);
+		picoBeep(-1.2, 0.1);
 		updateButtons();
 		picoFlush();
 
-	// Do nothing.
-	} else if (pixels.length > 0) {
-		picoBeep(-1.2, 0.1);
-
 	// Change maximum of dice faces.
 	} else {
+		custom = true;
 		maximum = maximum < 8 ? 8 : maximum < 10 ? 10 : 6;
 		rolling = -1; // Reroll.
 		result = 0;
@@ -281,6 +276,7 @@ async function main() {
 			if (value.length >= 6) {
 				pixels[pixels.length] = picoCode6(keys[k]);
 				maxmaximum = maximum = pixels.length;
+				custom = true;
 			}
 
 		// Load initial params.
@@ -435,6 +431,7 @@ async function main() {
 					}
 				}
 				if (pixels.length > 0) {
+					picoColor(colors);
 					s1 = s1 * 7 / picoSpriteSize(pixels[maximum - 1]);
 					picoSprite(pixels[maximum - 1], 0, x1, y1, 0, s1);
 				} else if (maximum <= 9) {
