@@ -6,7 +6,7 @@
 <link rel="icon" type="image/svg" href="icon.svg" />
 <link rel="apple-touch-icon" href="icon.png" sizes="192x192" />
 <link rel="manifest" href="manifest.json" />
-<link rel="stylesheet" href="pico/stylesheet.css" />
+<link rel="stylesheet" href="stylesheet.css" />
 </head>
 <body>
 <div id="container">
@@ -40,10 +40,7 @@
 </h6>
 <script>console.log = () => {};</script>
 <script src="daemon.js"></script>
-<script src="pico/image.js"></script>
-<script src="pico/param.js"></script>
-<script src="pico/sound.js"></script>
-<script src="pico/touch.js"></script>
+<script src="pico.js"></script>
 <!--Data--><script>
 const dots = [ // Dotted design pixels.
 	[0,7,7, 9,3,3],
@@ -174,11 +171,11 @@ async function menuAction() {
 		}
 
 		// Enter to edit mode.
-		picoSetStrings("../index.html", "u");
+		picoSetStrings("./index.html", "u");
 		if (appver > 0) {
 			picoSetStrings(appver, "v");
 		}
-		await picoReload("pico/index.html");
+		await picoReload("pico.html");
 
 	// Start sharing.
 	} else if (result > 0) {

@@ -1,10 +1,10 @@
 {
 	"name": "dice",
 	"short_name": "Dice",
-	"version": "0.9.40108a",
+	"version": "0.9.40109a",
 	"author": "saikoro.org",
-	"background_color": "#eee",
-	"theme_color": "#eee",
+	"background_color": "#dfdfdf",
+	"theme_color": "#dfdfdf",
 	"icons": [{
 		"src": "./icon.png",
 		"sizes": "192x192",
