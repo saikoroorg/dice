@@ -8,8 +8,8 @@ var pico = pico || {};
 // Worker class.
 pico.Worker = class {
 	static debug = true; // Debug print.
-	static script = "./daemon.js"; // This script file.
-	static manifest = "./manifest.json"; // Manifest file.
+	static script = "./picod.js"; // This script file.
+	static manifest = "./app.json"; // Manifest file.
 
 	//*----------------------------------------------------------*/
 
