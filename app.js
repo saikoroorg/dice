@@ -1,3 +1,5 @@
+picoLabel("title", "Dice"); // Title.
+
 const dots = [ // Dotted design pixels.
 	[0,7,7, 9,3,3],
 	[0,7,7, 9,1,5, 9,5,1],
@@ -42,32 +44,31 @@ var custom = false; // Custom flag.
 var rolling = 0; // Rolling count.
 var holding = 0; // Holding count.
 var result = 0; // Result.
-var appver = 0; // App version.
 
 // Update buttons.
-async function updateButtons() {
+async function appUpdate() {
 	if (custom) {
-		appMenu("action", "*");
-		//appMenu("minus", maximum > 1 ? "<" : " ");
-		//appMenu("plus", maximum < maxmaximum ? ">" : " ");
+		picoLabel("action", "*");
+		//picoLabel("minus", maximum > 1 ? "<" : " ");
+		//picoLabel("plus", maximum < maxmaximum ? ">" : " ");
 	} else if (count > 0 && result > 0) {
-		appMenu("action", "^");
+		picoLabel("action", "^");
 	} else {
-		appMenu("action");
+		picoLabel("action");
 	}
-	//appMenu("minus", count > 1 ? "-" : " ");
-	//appMenu("plus", count < maxcount ? "+" : " ");
+	//picoLabel("minus", count > 1 ? "-" : " ");
+	//picoLabel("plus", count < maxcount ? "+" : " ");
 	if (pixels.length > 0) {
 		let data = await picoSpriteData(pixels[maximum - 1], colors);
-		appMenu("select", null, data);
+		picoLabel("select", null, data);
 	} else if (maximum <= 9) {
 		let data = await picoSpriteData(dots[maximum - 1], colors);
-		appMenu("select", null, data);
+		picoLabel("select", null, data);
 	} else if (maximum <= maxmaximum) {
 		let data = await picoSpriteData(nums[maximum], colors);
-		appMenu("select", null, data);
+		picoLabel("select", null, data);
 	} else {
-		appMenu("select", "?");
+		picoLabel("select", "?");
 	}
 }
 
@@ -100,10 +101,7 @@ async function appAction() {
 		}
 
 		// Enter to edit mode.
-		if (appver > 0) {
-			picoSetStrings(appver, "v");
-		}
-		await appEdit();
+		return -1; // Return -1 to edit.
 
 	// Start sharing.
 	} else if (result > 0) {
@@ -117,11 +115,10 @@ async function appAction() {
 		picoSetCode8(colors, key + 1);
 
 		// Start sharing.
-		if (appver > 0) {
-			picoSetStrings(appver, "v");
-		}
-		await picoShare();
+		return 1; // Return 1 to share.
 	}
+
+	return 0; // Do nothing.
 }
 
 // Select button.
@@ -137,7 +134,7 @@ async function appSelect(x) {
 			} else {
 				picoBeep(-1.2, 0.1);
 			}
-			updateButtons();
+			appUpdate();
 
 		// Change count of dice.
 		} else {*/
@@ -149,14 +146,14 @@ async function appSelect(x) {
 			} else {
 				picoBeep(-1.2, 0.1);
 			}
-			updateButtons();
+			appUpdate();
 		//}
 
 	// Do nothing on customize dice.
 	} else if (pixels.length > 0) {
 		custom = true;
 		picoBeep(-1.2, 0.1);
-		updateButtons();
+		appUpdate();
 
 	// Change maximum of dice faces.
 	} else {
@@ -165,14 +162,14 @@ async function appSelect(x) {
 		rolling = -1; // Reroll.
 		result = 0;
 		picoBeep(1.2, 0.1);
-		updateButtons();
+		appUpdate();
 	}
-};
+
+	return 0; // Do nothing.
+}
 
 // Main.
 async function appMain() {
-	appMenu("title", "Dice"); // Title.
-
 	//var count = 1; // Count of dice.
 	//var maximum = 6; // Maximum of dice faces.
 	//var rolling = 0; // Rolling count.
@@ -184,12 +181,8 @@ async function appMain() {
 		console.log("Param" + k + ": " + keys[k] + " -> " + picoStrings(keys[k]));
 		let value = picoStrings(keys[k]);
 
-		// Load version.
-		if (keys[k] == "v") {
-			appver = value;
-
 		// Load colors.
-		} else if ((value[0] == "0" && value[1] == "0" && value[2] == "0") ||
+		if ((value[0] == "0" && value[1] == "0" && value[2] == "0") ||
 			(value[0] == "1" && value[1] == "1" && value[2] == "1")) {
 			colors = picoCode8(keys[k]);
 
@@ -215,7 +208,7 @@ async function appMain() {
 	}
 
 	// Initialize buttons.
-	updateButtons();
+	appUpdate();
 
 	// Main loop.
 	var number = 0; // Rolled number.
@@ -259,7 +252,7 @@ async function appMain() {
 						result = 0;
 						rolling = -1;
 						holding = 0;
-						updateButtons();
+						appUpdate();
 					}
 
 				} else {
@@ -273,7 +266,7 @@ async function appMain() {
 						/*if (holding > 60) {
 							custom = true;
 							rolling = -1;
-							updateButtons();
+							appUpdate();
 						}*/
 
 					// Timeout and show result.
@@ -285,7 +278,7 @@ async function appMain() {
 						angle = 0;
 						rolling = 1;
 						number++;
-						updateButtons();
+						appUpdate();
 
 						// Number matched beeps on show result.
 						const kcents = [-1.0,
@@ -325,13 +318,13 @@ async function appMain() {
 				/*if (!holding) { // Ignore after holding.
 					if (picoAction(x0-30, y0, 30, 20)) {
 						maximum = maximum - 1 >= 1 ? maximum - 1 : 1;
-						updateButtons();
+						appUpdate();
 					} else if (picoMotion(x0-30, y0, 30, 20)) {
 						s0 = 1.2;
 						picoChar("-", -1, x0-44, y0, 0, s0);
 					} else if (picoAction(x0+30, y0, 30, 20)) {
 						maximum = maximum + 1 <= maxmaximum ? maximum + 1 : maxmaximum;
-						updateButtons();
+						appUpdate();
 					} else if (picoMotion(x0+30, y0, 30, 20)) {
 						s0 = 1.2;
 						picoChar("+", -1, x0+44, y0, 0, s0);
@@ -347,7 +340,7 @@ async function appMain() {
 						custom = 0;
 						rolling = -1;
 						picoBeep(1.2, 0.1);
-						updateButtons();
+						appUpdate();
 					} else if (picoMotion(x1, y1, w1, w1)) {
 						s1 = 8;
 					}
@@ -405,5 +398,3 @@ async function appMain() {
 		} // End of playing loop.
 	} // End of main loop.
 };
-
-appMain();

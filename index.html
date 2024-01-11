@@ -13,21 +13,21 @@
 	<h1 id="header">
 		<div class="logo">
 			<a id="title" href="./index.html"></a>
-			<a id="subtitle" href="javascript:top.location.reload();">.</a>
+			<a id="subtitle" href="javascript:top.location.reload();"></a>
 		</div>
 		<div class="menu center">
-			<a class="item light secret" id="action" href="javascript:appAction();">
+			<a class="item light secret" id="action" href="javascript:onAction();">
 				<span id="actionText"></span>
 				<img class="icon" id="actionIcon" src="" />
 			</a>
 		</div>
 		<div class="menu">
-			<a class="item clear" id="minus" href="javascript:appSelect(-1);">-</a>
-			<a class="item light" id="select" href="javascript:appSelect(0);">
+			<a class="item clear" id="minus" href="javascript:onSelect(-1);">-</a>
+			<a class="item light" id="select" href="javascript:onSelect(0);">
 				<span id="selectText"></span>
 				<img class="icon" id="selectIcon" src="" />
 			</a>
-			<a class="item clear" id="plus" href="javascript:appSelect(+1);">+</a>
+			<a class="item clear" id="plus" href="javascript:onSelect(+1);">+</a>
 		</div>
 	</h1>
 	<div id="contents">
@@ -42,15 +42,44 @@
 <script src="picod.js"></script>
 <script src="pico.js"></script>
 <!--Menu--><script>
+var appver = 0; // App version.
 
-// Enter to edit mode.
-async function appEdit() {
-	picoSetStrings("./index.html", "u");
-	await picoReload("pico.html");
+// On acction button.
+async function onAction() {
+	let r = await appAction();
+	if (appver > 0) {
+		picoSetStrings(appver, "v");
+	}
+	if (r > 0) {
+		await picoShare();
+	} else if (r < 0) {
+		picoSetStrings("./index.html", "u");
+		await picoReload("pico.html");
+	}
 }
 
-// Update menu.
-function appMenu(id, text=null, icon=null) {
+// On select button.
+async function onSelect(x) {
+	let r = await appSelect(x);
+	if (appver > 0) {
+		picoSetStrings(appver, "v");
+	}
+	if (r > 0) {
+		await picoShare();
+	} else if (r < 0) {
+		picoSetStrings("./index.html", "u");
+		await picoReload("pico.html");
+	}
+}
+
+// On init main loop.
+async function onMain() {
+	appver = picoStrings("v");
+	await appMain();
+}
+
+// Update label.
+function picoLabel(id, text=null, icon=null) {
 	let e = document.getElementById(id);
 	if (e) {
 		e.style.display = (text || icon) ? "flex" : "none";
@@ -71,11 +100,18 @@ function appMenu(id, text=null, icon=null) {
 		} else if (text) {
 			e.innerText = text;
 		}
-		picoFlush();
 	}
+	e = document.getElementsByTagName(id);
+	if (e && e[0] && text) {
+		e[0].innerText = text;
+	}
+	picoFlush();
 }
 
 </script><!--/Menu-->
 <script src="app.js"></script>
+<!--Main--><script>
+onMain();
+</script><!--/Main-->
 </body>
 </html>

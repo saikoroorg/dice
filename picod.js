@@ -243,9 +243,9 @@ pico.Worker = class {
 		if (manifest.author) {
 			replacing.author = manifest.author;
 		}
-		if (manifest.short_name) {
-			replacing.title = manifest.short_name;
-		}
+		//if (manifest.short_name) {
+		//	replacing.title = manifest.short_name;
+		//}
 		this._debug("Created replacing table: " + JSON.stringify(replacing));
 		return replacing;
 	}

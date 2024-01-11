@@ -13,7 +13,7 @@
 	<h1 id="header">
 		<div class="logo">
 			<a id="title" href="./index.html"></a>
-			<a id="subtitle" href="javascript:top.location.reload();">.</a>
+			<a id="subtitle" href="javascript:top.location.reload();"></a>
 		</div>
 		<div class="menu center">
 			<a class="item light secret" id="action" href="javascript:appAction();">
@@ -66,10 +66,15 @@ function appMenu(id, text=null, icon=null) {
 			e.innerText = text;
 		}
 	}
+	e = document.getElementsByTagName(id);
+	if (e && e[0] && text) {
+		e[0].innerText = text;
+	}
 }
 
 </script><!--/Menu-->
 <!--Main--><script>
+appMenu("title", "Pico"); // Title.
 
 var maxwidth = 20, maxheight = 20; // Canvas max size.
 var width = 7, height = 7; // Canvas size.
@@ -262,6 +267,7 @@ async function appMain() {
 				colors = picoCode8(k);
 				colors.length = colors.length < maxcolor * 3 ? colors.length : maxcolor * 3;
 				depth = colors.length / 3;
+				colorselecting = depth - 1;
 				console.log("Load color: " + colors);
 
 			// Load pixels to buffers.
