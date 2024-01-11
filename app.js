@@ -41,7 +41,7 @@ const maxcount = 20; // Maximum count of dice
 var maximum = 6; // Maximum of dice faces.
 var maxmaximum = 20; // Maximum of numbered dice.
 var custom = false; // Custom flag.
-var rolling = 0; // Rolling count.
+var playing = 0; // Rolling count.
 var holding = 0; // Holding count.
 var result = 0; // Result.
 
@@ -140,7 +140,7 @@ async function appSelect(x) {
 		} else {*/
 			if ((x > 0 && count + x <= maxcount) || (x < 0 && count + x > 0)) {
 				count = count + x;
-				rolling = -1; // Reroll.
+				playing = -1; // Reroll.
 				result = 0;
 				picoBeep(1.2, 0.1);
 			} else {
@@ -159,7 +159,7 @@ async function appSelect(x) {
 	} else {
 		custom = true;
 		maximum = maximum < 8 ? 8 : maximum < 10 ? 10 : 6;
-		rolling = -1; // Reroll.
+		playing = -1; // Reroll.
 		result = 0;
 		picoBeep(1.2, 0.1);
 		appUpdate();
@@ -168,11 +168,11 @@ async function appSelect(x) {
 	return 0; // Do nothing.
 }
 
-// Main.
-async function appMain() {
+// Load.
+async function appLoad() {
 	//var count = 1; // Count of dice.
 	//var maximum = 6; // Maximum of dice faces.
-	//var rolling = 0; // Rolling count.
+	//var playing = 0; // Rolling count.
 	//var holding = 0; // Holding count.
 
 	// Load query params.
@@ -209,192 +209,204 @@ async function appMain() {
 
 	// Initialize buttons.
 	appUpdate();
+}
 
-	// Main loop.
-	var number = 0; // Rolled number.
-	while (true) {
+var posx = [], posy = []; // Rolling position.
+var angle = 0; // Rolling angle.
+var scale = 0; // Rolling scale.
+var randoms = []; // Result number.
+var number = 0; // Rolled number.
 
-		// Sprite lines and rows.
-		const colMax = 5;//picoSqrt(count - 1) + 1;
-		let row = picoDiv(count - 1, colMax) + 1; // Row count.
-		let col = picoDiv(count - 1, row) + 1; // Column count.
-		let colMod = picoMod(count - 1, col) + 1; // Extra column count.
+// Init.
+async function appInit() {
 
-		const size = 200;
-		let posx = [], posy = [];
-		for (let i = 0; i < count; i++) {
-			let x = picoMod(i, col) + 1, y = picoDiv(i, col) + 1;
-			if (y < row) {
-				posx[i] = (x / (col + 1) - 0.5) * size;
-				posy[i] = (y / (row + 1) - 0.5) * size;
-			} else {
-				posx[i] = (x / (colMod + 1) - 0.5) * size;
-				posy[i] = (y / (row + 1) - 0.5) * size;
+	// Sprite lines and rows.
+	const colMax = 5;//picoSqrt(count - 1) + 1;
+	let row = picoDiv(count - 1, colMax) + 1; // Row count.
+	let col = picoDiv(count - 1, row) + 1; // Column count.
+	let colMod = picoMod(count - 1, col) + 1; // Extra column count.
+
+	const size = 200;
+	for (let i = 0; i < count; i++) {
+		let x = picoMod(i, col) + 1, y = picoDiv(i, col) + 1;
+		if (y < row) {
+			posx[i] = (x / (col + 1) - 0.5) * size;
+			posy[i] = (y / (row + 1) - 0.5) * size;
+		} else {
+			posx[i] = (x / (colMod + 1) - 0.5) * size;
+			posy[i] = (y / (row + 1) - 0.5) * size;
+		}
+		//console.log("" + x + "," + y + " -> " + posx[i] + "," + posy[i]);
+	}
+
+	// Sprite scale.
+	let c0 = count < 1 ? 1 : count < col ? count : row >= col ? row : col;
+	scale = 20 / (c0 + 1);
+
+	// Rolling dice.
+	result = 0;
+
+	// Reset playing count.
+	playing = 1;
+}
+
+// Main.
+async function appMain() {
+
+	if (!custom) {
+		if (result > 0) {
+
+			// Restart to roll dice.
+			if (picoMotion()) {
+				result = 0;
+				playing = -1;
+				holding = 0;
+				appUpdate();
 			}
-			//console.log("" + x + "," + y + " -> " + posx[i] + "," + posy[i]);
+
+		} else {
+
+			// Hold to playing dice.
+			if (picoMotion()) {
+				playing = 1;
+				//holding++;
+
+				// Holding to enter custom mode.
+				/*if (holding > 60) {
+					custom = true;
+					playing = -1;
+					appUpdate();
+				}*/
+
+			// Timeout and show result.
+			} else if (playing > 60) {
+				result = picoSeed(); // Set result seed.
+				for (let i = 0; i < count; i++) {
+					randoms[i] = picoRandom(maximum);
+				}
+				angle = 0;
+				playing = 1;
+				number++;
+				appUpdate();
+
+				// Number matched beeps on show result.
+				const kcents = [-1.0,
+					-0.9,-0.7,-0.5, -0.4,-0.2, 0.0, 0.2, // 1:Do,2:Re,3:Mi, 4:Fa,5:So,6:La,7:Ti
+					 0.3, 0.5, 0.7,  0.8, 1.0, 1.2, 1.4,
+					 1.5, 1.7, 1.9,  2.0, 2.2];
+				const timing = count <= 2 ? 0.2 : 0.5/count;
+				for (let i = 0; i < count; i++) {
+					let k = randoms[i] < 10 ? randoms[i] : randoms[i] - 10;
+					let j = k >= 0 && k < kcents.length ? k : 0;
+					picoBeep(kcents[j], timing/2, timing * i);
+				}
+
+			// Continue playing.
+			} else {
+				//holding = 0;						
+			}
 		}
 
-		// Sprite scale.
-		let c0 = count < 1 ? 1 : count < col ? count : row >= col ? row : col;
-		let scale = 20 / (c0 + 1);
+		// Update angle.
+		if (result <= 0) {
+			angle = picoMod(angle + 20, 360);
+			for (let i = 0; i < count; i++) {
+				randoms[i] = picoMod(picoTime(), maximum);
+			}
+		}
+	}
 
-		// Rolling dice.
-		let angle = 0;
-		let randoms = [];
-		result = 0;
-		for (rolling = 1; rolling >= 1; rolling++) {
+	// Clear screen.
+	picoClear();
 
-			if (!custom) {
-				if (result > 0) {
+	// Draw customizing dice.
+	if (custom) {
 
-					// Restart to roll dice.
-					if (picoMotion()) {
-						result = 0;
-						rolling = -1;
-						holding = 0;
-						appUpdate();
-					}
+		// Draw maximum count.
+		let x0 = 0, y0 = 50, c0 = -1, s0 = 2;
+		/*if (!holding) { // Ignore after holding.
+			if (picoAction(x0-30, y0, 30, 20)) {
+				maximum = maximum - 1 >= 1 ? maximum - 1 : 1;
+				appUpdate();
+			} else if (picoMotion(x0-30, y0, 30, 20)) {
+				s0 = 1.2;
+				picoChar("-", -1, x0-44, y0, 0, s0);
+			} else if (picoAction(x0+30, y0, 30, 20)) {
+				maximum = maximum + 1 <= maxmaximum ? maximum + 1 : maxmaximum;
+				appUpdate();
+			} else if (picoMotion(x0+30, y0, 30, 20)) {
+				s0 = 1.2;
+				picoChar("+", -1, x0+44, y0, 0, s0);
+			}
+		}*/
+		//picoChar(maximum + "/" + maxmaximum, c0, x0, y0, 0, s0);
+		picoChar("*" + count, c0, x0, y0, 0, s0);
 
-				} else {
+		// Draw icon.
+		let x1 = 0, y1 = 0, s1 = 10, w1 = 32;
+		if (!holding) { // Ignore after holding.
+			if (picoAction(x1, y1, w1, w1)) {
+				custom = 0;
+				playing = -1;
+				picoBeep(1.2, 0.1);
+				appUpdate();
+			} else if (picoMotion(x1, y1, w1, w1)) {
+				s1 = 8;
+			}
+		}
+		if (pixels.length > 0) {
+			picoColor(colors);
+			s1 = s1 * 7 / picoSpriteSize(pixels[maximum - 1]);
+			picoSprite(pixels[maximum - 1], 0, x1, y1, 0, s1);
+		} else if (maximum <= 9) {
+			picoSprite(dots[maximum - 1], 0, x1, y1, 0, s1);
+		} else if (maximum <= maxmaximum) {
+			picoSprite(nums[maximum], 0, x1, y1, 0, s1);
+		}
 
-					// Hold to rolling dice.
-					if (picoMotion()) {
-						rolling = 1;
-						//holding++;
+		// Ignore action after holding.
+		if (holding && picoAction()) {
+			holding = 0;
+		}
 
-						// Holding to enter custom mode.
-						/*if (holding > 60) {
-							custom = true;
-							rolling = -1;
-							appUpdate();
-						}*/
+	// Draw rolling dice.
+	} else {
 
-					// Timeout and show result.
-					} else if (rolling > 60) {
-						result = picoSeed(); // Set result seed.
-						for (let i = 0; i < count; i++) {
-							randoms[i] = picoRandom(maximum);
-						}
-						angle = 0;
-						rolling = 1;
-						number++;
-						appUpdate();
+		// Draw number sprite.
+		let n = result <= 0 ? number : number - 1;
+		picoChar(n, 0, 0, -80);
 
-						// Number matched beeps on show result.
-						const kcents = [-1.0,
-							-0.9,-0.7,-0.5, -0.4,-0.2, 0.0, 0.2, // 1:Do,2:Re,3:Mi, 4:Fa,5:So,6:La,7:Ti
-							 0.3, 0.5, 0.7,  0.8, 1.0, 1.2, 1.4,
-							 1.5, 1.7, 1.9,  2.0, 2.2];
-						const timing = count <= 2 ? 0.2 : 0.5/count;
-						for (let i = 0; i < count; i++) {
-							let k = randoms[i] < 10 ? randoms[i] : randoms[i] - 10;
-							let j = k >= 0 && k < kcents.length ? k : 0;
-							picoBeep(kcents[j], timing/2, timing * i);
-						}
+		let s = playing < 5 ? scale * (0.8 + 0.04 * playing) : scale;
 
-					// Continue rolling.
-					} else {
-						//holding = 0;						
-					}
-				}
-
-				// Update angle.
-				if (result <= 0) {
-					angle = picoMod(angle + 20, 360);
-					for (let i = 0; i < count; i++) {
-						randoms[i] = picoMod(picoTime(), maximum);
-					}
-				}
+		// Draw original design sprite.
+		if (pixels.length > 0) {
+			picoColor(colors);
+			for (let i = 0; i < count; i++) {
+				let s1 = s * 7 / picoSpriteSize(pixels[randoms[i]]);
+				picoSprite(pixels[randoms[i]], 0, posx[i], posy[i], angle, s1);
 			}
 
-			// Clear screen.
-			picoClear();
-
-			// Draw customizing dice.
-			if (custom) {
-
-				// Draw maximum count.
-				let x0 = 0, y0 = 50, c0 = -1, s0 = 2;
-				/*if (!holding) { // Ignore after holding.
-					if (picoAction(x0-30, y0, 30, 20)) {
-						maximum = maximum - 1 >= 1 ? maximum - 1 : 1;
-						appUpdate();
-					} else if (picoMotion(x0-30, y0, 30, 20)) {
-						s0 = 1.2;
-						picoChar("-", -1, x0-44, y0, 0, s0);
-					} else if (picoAction(x0+30, y0, 30, 20)) {
-						maximum = maximum + 1 <= maxmaximum ? maximum + 1 : maxmaximum;
-						appUpdate();
-					} else if (picoMotion(x0+30, y0, 30, 20)) {
-						s0 = 1.2;
-						picoChar("+", -1, x0+44, y0, 0, s0);
-					}
-				}*/
-				//picoChar(maximum + "/" + maxmaximum, c0, x0, y0, 0, s0);
-				picoChar("*" + count, c0, x0, y0, 0, s0);
-
-				// Draw icon.
-				let x1 = 0, y1 = 0, s1 = 10, w1 = 32;
-				if (!holding) { // Ignore after holding.
-					if (picoAction(x1, y1, w1, w1)) {
-						custom = 0;
-						rolling = -1;
-						picoBeep(1.2, 0.1);
-						appUpdate();
-					} else if (picoMotion(x1, y1, w1, w1)) {
-						s1 = 8;
-					}
-				}
-				if (pixels.length > 0) {
-					picoColor(colors);
-					s1 = s1 * 7 / picoSpriteSize(pixels[maximum - 1]);
-					picoSprite(pixels[maximum - 1], 0, x1, y1, 0, s1);
-				} else if (maximum <= 9) {
-					picoSprite(dots[maximum - 1], 0, x1, y1, 0, s1);
-				} else if (maximum <= maxmaximum) {
-					picoSprite(nums[maximum], 0, x1, y1, 0, s1);
-				}
-
-				// Ignore action after holding.
-				if (holding && picoAction()) {
-					holding = 0;
-				}
-
-			// Draw rolling dice.
-			} else {
-
-				// Draw number sprite.
-				let n = result <= 0 ? number : number - 1;
-				picoChar(n, 0, 0, -80);
-
-				let s = rolling < 5 ? scale * (0.8 + 0.04 * rolling) : scale;
-
-				// Draw original design sprite.
-				if (pixels.length > 0) {
-					picoColor(colors);
-					for (let i = 0; i < count; i++) {
-						let s1 = s * 7 / picoSpriteSize(pixels[randoms[i]]);
-						picoSprite(pixels[randoms[i]], 0, posx[i], posy[i], angle, s1);
-					}
-
-				// Draw dotted design sprite.
-				} else if (maximum <= 9) {
-					picoColor(colors);
-					for (let i = 0; i < count; i++) {
-						picoSprite(dots[randoms[i]], 0, posx[i], posy[i], angle, s);
-					}
-
-				// Draw numbered design sprite.
-				} else if (maximum <= maxmaximum) {
-					picoColor(colors);
-					for (let i = 0; i < count; i++) {
-						picoSprite(nums[randoms[i]], 0, posx[i], posy[i], angle, s);
-					}
-				}
+		// Draw dotted design sprite.
+		} else if (maximum <= 9) {
+			picoColor(colors);
+			for (let i = 0; i < count; i++) {
+				picoSprite(dots[randoms[i]], 0, posx[i], posy[i], angle, s);
 			}
 
-			await picoFlip();
-			await picoRead(result > 0 && rolling >= 5 ? -1 : 0);
-		} // End of playing loop.
-	} // End of main loop.
+		// Draw numbered design sprite.
+		} else if (maximum <= maxmaximum) {
+			picoColor(colors);
+			for (let i = 0; i < count; i++) {
+				picoSprite(nums[randoms[i]], 0, posx[i], posy[i], angle, s);
+			}
+		}
+	}
+
+	// Update animation if rolling.
+	if (result == 0 || playing < 5) {
+		picoFlush();
+	}
+
+	// Increment playing count.
+	return playing++;
 };

@@ -16,18 +16,18 @@
 			<a id="subtitle" href="javascript:top.location.reload();"></a>
 		</div>
 		<div class="menu center">
-			<a class="item light secret" id="action" href="javascript:onAction();">
+			<a class="item light secret" id="action" href="javascript:picoOnAction();">
 				<span id="actionText"></span>
 				<img class="icon" id="actionIcon" src="" />
 			</a>
 		</div>
 		<div class="menu">
-			<a class="item clear" id="minus" href="javascript:onSelect(-1);">-</a>
-			<a class="item light" id="select" href="javascript:onSelect(0);">
+			<a class="item clear" id="minus" href="javascript:picoOnSelect(-1);">-</a>
+			<a class="item light" id="select" href="javascript:picoOnSelect(0);">
 				<span id="selectText"></span>
 				<img class="icon" id="selectIcon" src="" />
 			</a>
-			<a class="item clear" id="plus" href="javascript:onSelect(+1);">+</a>
+			<a class="item clear" id="plus" href="javascript:picoOnSelect(+1);">+</a>
 		</div>
 	</h1>
 	<div id="contents">
@@ -41,17 +41,22 @@
 <!--script>console.log = () => {};</script!-->
 <script src="picod.js"></script>
 <script src="pico.js"></script>
-<!--Menu--><script>
-var appver = 0; // App version.
+<!--Event--><script>
+pico.appurl = 0; // Referenced url.
+pico.appver = 0; // App version.
 
 // On acction button.
-async function onAction() {
+async function picoOnAction() {
 	let r = await appAction();
-	if (appver > 0) {
-		picoSetStrings(appver, "v");
+	if (pico.appver > 0) {
+		picoSetStrings(pico.appver, "v");
 	}
 	if (r > 0) {
-		await picoShare();
+		if (pico.appurl) {
+			await picoReload(pico.appurl);
+		} else {
+			await picoShare();
+		}
 	} else if (r < 0) {
 		picoSetStrings("./index.html", "u");
 		await picoReload("pico.html");
@@ -59,10 +64,10 @@ async function onAction() {
 }
 
 // On select button.
-async function onSelect(x) {
+async function picoOnSelect(x) {
 	let r = await appSelect(x);
-	if (appver > 0) {
-		picoSetStrings(appver, "v");
+	if (pico.appver > 0) {
+		picoSetStrings(pico.appver, "v");
 	}
 	if (r > 0) {
 		await picoShare();
@@ -72,10 +77,27 @@ async function onSelect(x) {
 	}
 }
 
-// On init main loop.
-async function onMain() {
-	appver = picoStrings("v");
-	await appMain();
+// On main loop.
+async function picoOnMain() {
+	pico.appurl = picoStrings("u");
+	if (pico.appurl) {
+		picoLabel("title");
+		picoLabel("subtitle");
+	}
+	pico.appver = picoStrings("v");
+	await appLoad();
+	for (;;) {
+		await appInit();
+		for (;;) {
+			picoClear();
+			let r = await appMain();
+			await picoFlip(0);
+			await picoRead();
+			if (r <= 0) {
+				break;
+			}
+		}
+	}
 }
 
 // Update label.
@@ -108,10 +130,10 @@ function picoLabel(id, text=null, icon=null) {
 	picoFlush();
 }
 
-</script><!--/Menu-->
+</script><!--/Event-->
 <script src="app.js"></script>
 <!--Main--><script>
-onMain();
+picoOnMain();
 </script><!--/Main-->
 </body>
 </html>
