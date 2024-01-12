@@ -1,4 +1,4 @@
-picoLabel("title", "Dice"); // Title.
+picoTitle("Dice"); // Title.
 
 const dots = [ // Dotted design pixels.
 	[0,7,7, 9,3,3],
@@ -178,32 +178,32 @@ async function appLoad() {
 	// Load query params.
 	let keys = picoKeys();
 	for (let k = 0; k < keys.length; k++) {
-		console.log("Param" + k + ": " + keys[k] + " -> " + picoStrings(keys[k]));
-		let value = picoStrings(keys[k]);
+		let value = picoStrings(k);
+		if (value) {
+			console.log("Param" + k + ": " + keys[k] + " -> " + picoStrings(k));
 
-		// Load colors.
-		if ((value[0] == "0" && value[1] == "0" && value[2] == "0") ||
-			(value[0] == "1" && value[1] == "1" && value[2] == "1")) {
-			colors = picoCode8(keys[k]);
+			// Load colors.
+			if ((value[0] == "0" && value[1] == "0" && value[2] == "0") ||
+				(value[0] == "1" && value[1] == "1" && value[2] == "1")) {
+				colors = picoCode8(keys[k]);
 
-		// Load pixels.
-		} else if (value[0] == "0" && value[1] != "0" && value[2] != "0") {
-			if (value.length >= 6) {
+			// Load pixels.
+			} else if (value[0] == "0" && value[1] != "0" && value[2] != "0" && value.length >= 6) {
 				pixels[pixels.length] = picoCode6(keys[k]);
 				maxmaximum = maximum = pixels.length;
 				custom = true;
-			}
 
-		// Load initial params.
-		} else {
-			let numbers = picoNumbers(keys[k]);
-			count = numbers[0] < 1 ? 1 : numbers[0] < maxcount ? numbers[0] : maxcount;
-			if (numbers[1] == 6 || numbers[1] == 10) {
-				maximum = numbers[1] < maxmaximum ? numbers[1] : maxmaximum;
+			// Load initial params.
 			} else {
-				maximum = numbers[1] < maxmaximum ? numbers[1] : maxmaximum;
+				let numbers = picoNumbers(keys[k]);
+				count = numbers[0] < 1 ? 1 : numbers[0] < maxcount ? numbers[0] : maxcount;
+				if (numbers[1] == 6 || numbers[1] == 10) {
+					maximum = numbers[1] < maxmaximum ? numbers[1] : maxmaximum;
+				} else {
+					maximum = numbers[1] < maxmaximum ? numbers[1] : maxmaximum;
+				}
+				picoRandom(0, numbers[2]);
 			}
-			picoRandom(0, numbers[2]);
 		}
 	}
 

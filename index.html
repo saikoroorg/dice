@@ -42,7 +42,7 @@
 <script src="picod.js"></script>
 <script src="pico.js"></script>
 <!--Event--><script>
-pico.appurl = 0; // Referenced url.
+pico.appurl = null; // Referenced url.
 pico.appver = 0; // App version.
 
 // On acction button.
@@ -100,6 +100,21 @@ async function picoOnMain() {
 	}
 }
 
+// Update title.
+function picoTitle(text=null) {
+	let e = document.getElementsByTagName("title");
+	if (e && e[0]) {
+		if (text) {
+			e[0].style.display = "flex";
+			e[0].innerText = text;
+		} else {
+			e[0].style.display = "none";
+			e[0].innerText = "";
+		}
+	}
+	picoLabel("title", text);
+}
+
 // Update label.
 function picoLabel(id, text=null, icon=null) {
 	let e = document.getElementById(id);
@@ -122,10 +137,6 @@ function picoLabel(id, text=null, icon=null) {
 		} else if (text) {
 			e.innerText = text;
 		}
-	}
-	e = document.getElementsByTagName(id);
-	if (e && e[0] && text) {
-		e[0].innerText = text;
 	}
 	picoFlush();
 }

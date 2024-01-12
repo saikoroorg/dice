@@ -42,7 +42,7 @@
 <script src="picod.js"></script>
 <script src="pico.js"></script>
 <!--Event--><script>
-pico.appurl = 0; // Referenced url.
+pico.appurl = null; // Referenced url.
 pico.appver = 0; // App version.
 
 // On acction button.
@@ -81,8 +81,7 @@ async function picoOnSelect(x) {
 async function picoOnMain() {
 	pico.appurl = picoStrings("u");
 	if (pico.appurl) {
-		picoLabel("title");
-		picoLabel("subtitle");
+		picoTitle("");
 	}
 	pico.appver = picoStrings("v");
 	await appLoad();
@@ -98,6 +97,21 @@ async function picoOnMain() {
 			}
 		}
 	}
+}
+
+// Update title.
+function picoTitle(text=null) {
+	let e = document.getElementsByTagName("title");
+	if (e && e[0]) {
+		if (text) {
+			e[0].style.display = "flex";
+			e[0].innerText = text;
+		} else {
+			e[0].style.display = "none";
+			e[0].innerText = "";
+		}
+	}
+	picoLabel("title", text);
 }
 
 // Update label.
@@ -123,16 +137,12 @@ function picoLabel(id, text=null, icon=null) {
 			e.innerText = text;
 		}
 	}
-	e = document.getElementsByTagName(id);
-	if (e && e[0] && text) {
-		e[0].innerText = text;
-	}
 	picoFlush();
 }
 
 </script><!--/Event-->
 <!--Main--><script>
-picoLabel("title", "Pico"); // Title.
+picoTitle("Pico"); // Title.
 
 var maxwidth = 20, maxheight = 20; // Canvas max size.
 var width = 7, height = 7; // Canvas size.
@@ -279,33 +289,33 @@ async function appLoad() {
 		}
 	}
 
-	// Load params.
-	let keys = picoKeys();
-
-	// Load data and frames.
+	// Load query params.
+	let keys = picoKeys(), framecount = 0;
 	for (let k = 0; k < keys.length; k++) {
-		console.log("Param" + k + ": " + keys[k] + " -> " + picoStrings(keys[k]));
+		let value = picoStrings(k);
+		if (value) {
+			console.log("Param" + k + ": " + keys[k] + " -> " + picoStrings(k));
 
-		let numcode = picoCode6(keys[k]);
+			// Load colors.
+			if ((value[0] == "0" && value[1] == "0" && value[2] == "0") ||
+				(value[0] == "1" && value[1] == "1" && value[2] == "1")) {
+				colors = picoCode8(keys[k]);
+				colors.length = colors.length < maxcolor * 3 ? colors.length : maxcolor * 3;
+				depth = colors.length / 3;
+				colorselecting = depth - 1;
+				console.log("Load color: " + colors);
 
-		// Load colors.
-		if ((numcode[0] == 0 && numcode[1] == 0 && numcode[2] == 0) ||
-			(numcode[0] == 1 && numcode[1] == 1 && numcode[2] == 1)) {
-			colors = picoCode8(keys[k]);
-			colors.length = colors.length < maxcolor * 3 ? colors.length : maxcolor * 3;
-			depth = colors.length / 3;
-			colorselecting = depth - 1;
-			console.log("Load color: " + colors);
-
-		// Load pixels to buffers.
-		} else if (numcode[0] == "0" && numcode[1] != "0" && numcode[2] != "0") {
-			buffers[anime] = numcode;
-			anime = anime + 1;
-			frame = anime - 1;
-			if (anime >= 2) {
-				animeflag = 1;
+			// Load pixels.
+			} else if (value[0] == "0" && value[1] != "0" && value[2] != "0" && value.length >= 6) {
+				buffers[framecount] = picoCode6(keys[k]);
+				frame = framecount;
+				anime = framecount + 1;
+				if (anime >= 2) {
+					animeflag = 1;
+				}
+				console.log("Load buffer" + keys[k] + ": " + buffers[framecount]);
+				framecount++;
 			}
-			console.log("Load buffer" + keys[k] + ": " + buffers[frame]);
 		}
 	}
 }
