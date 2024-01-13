@@ -78,6 +78,7 @@ async function picoOnSelect(x) {
 }
 
 // On main loop.
+// @todo: Consider exclusive control.
 async function picoOnMain() {
 	pico.appurl = picoStrings("u");
 	if (pico.appurl) {
@@ -87,11 +88,12 @@ async function picoOnMain() {
 	await appLoad();
 	for (;;) {
 		await appInit();
+		picoFlush(); // Flush to skip first read.
 		for (;;) {
 			picoClear();
+			await picoRead();
 			let r = await appMain();
 			await picoFlip(0);
-			await picoRead();
 			if (r <= 0) {
 				break;
 			}
@@ -246,7 +248,7 @@ function appSelect(x) {
 		appUpdate();
 
 		// Remove reduced frame after update icons.
-		if (frame >= anime) {
+		if (frame > anime - 1) {
 			frame = anime - 1;
 			playing = -1; // Restart.
 		}
