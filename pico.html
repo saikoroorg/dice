@@ -90,8 +90,8 @@ async function picoOnMain() {
 		await appInit();
 		picoFlush(); // Flush to skip first read.
 		for (;;) {
-			picoClear();
 			await picoRead();
+			picoClear();
 			let r = await appMain();
 			await picoFlip(0);
 			if (r <= 0) {
