@@ -152,7 +152,6 @@ var xoffset = picoDiv(maxwidth - width, 2); // Pixels x-index offset.
 var yoffset = picoDiv(maxheight - height, 2); // Pixels y-index offset.
 const maxanime = 20; // Buffer max size.
 var anime = 1; // Buffer count.
-var minanime = 1; // Buffer min index.
 var frame = 0; // Anime frame index.
 var buffers = []; // Pixels buffers.
 var animeflag = 0; // Anime editing flag.
@@ -210,7 +209,7 @@ async function appAction() {
 
 	// Create num code to share url.
 	let k = 0;
-	for (let p = 0; p < maxanime; p++) {
+	for (let p = 0; p < anime; p++) {
 		if (buffers[p]) {
 			picoSetCode6(buffers[p], k);
 			k++;
