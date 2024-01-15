@@ -12,7 +12,7 @@
 <div id="container">
 	<h1 id="header">
 		<div class="logo">
-			<a id="title" href="./index.html"></a>
+			<a id="title" href="javascript:picoOnTitle();">
 			<a id="subtitle" href="javascript:top.location.reload();"></a>
 		</div>
 		<div class="menu center">
@@ -42,8 +42,18 @@
 <script src="picod.js"></script>
 <script src="pico.js"></script>
 <!--Event--><script>
+pico.apptitle = ""; // App title.
 pico.appurl = null; // Referenced url.
 pico.appver = 0; // App version.
+
+// On title label.
+async function picoOnTitle() {
+	picoResetParams();
+	if (pico.appver > 0) {
+		picoSetStrings(pico.appver, "v");
+	}
+	await picoReload("./index.html");
+}
 
 // On acction button.
 async function picoOnAction() {
@@ -59,50 +69,32 @@ async function picoOnAction() {
 		}
 	} else if (r < 0) {
 		picoSetStrings("./index.html", "u");
-		await picoReload("pico.html");
-	}
-}
-
-// On select button.
-async function picoOnSelect(x) {
-	let r = await appSelect(x);
-	if (pico.appver > 0) {
-		picoSetStrings(pico.appver, "v");
-	}
-	if (r > 0) {
-		await picoShare();
-	} else if (r < 0) {
-		picoSetStrings("./index.html", "u");
+		picoSetStrings(pico.apptitle, "t");
 		await picoReload("pico.html");
 	}
 }
 
 // On main loop.
-// @todo: Consider exclusive control.
 async function picoOnMain() {
-	pico.appurl = picoStrings("u");
-	if (pico.appurl) {
-		picoTitle("");
+	let title = picoStrings("t");
+	if (title) {
+		pico.apptitle = title;
+		picoTitle(pico.apptitle);
 	}
+	pico.appurl = picoStrings("u");
 	pico.appver = picoStrings("v");
 	await appLoad();
+	picoFlush(); // Flush to skip first read.
 	for (;;) {
-		await appInit();
-		picoFlush(); // Flush to skip first read.
-		for (;;) {
-			await picoRead();
-			picoClear();
-			let r = await appMain();
-			await picoFlip(0);
-			if (r <= 0) {
-				break;
-			}
-		}
+		await picoRead();
+		picoClear();
+		await appMain();
+		await picoFlip(0);
 	}
 }
 
 // Update title.
-function picoTitle(text=null) {
+function picoTitle(text=null, subtext=null) {
 	let e = document.getElementsByTagName("title");
 	if (e && e[0]) {
 		if (text) {
@@ -113,7 +105,13 @@ function picoTitle(text=null) {
 			e[0].innerText = "";
 		}
 	}
-	picoLabel("title", text);
+	if (text) {
+		pico.apptitle = text;
+		picoLabel("title", text);
+	}
+	if (subtext) {
+		picoLabel("subtitle", subtext)
+	}
 }
 
 // Update label.
@@ -144,7 +142,7 @@ function picoLabel(id, text=null, icon=null) {
 
 </script><!--/Event-->
 <!--Main--><script>
-picoTitle("Pico"); // Title.
+picoTitle("Pico", "Edit"); // Title.
 
 var maxwidth = 20, maxheight = 20; // Canvas max size.
 var width = 7, height = 7; // Canvas size.
@@ -155,7 +153,7 @@ var anime = 1; // Buffer count.
 var frame = 0; // Anime frame index.
 var buffers = []; // Pixels buffers.
 var animeflag = 0; // Anime editing flag.
-var playing = 1; // Playing count.
+var playing = 0; // Playing count.
 var pixels = []; // Canvas pixels.
 var colors = [255,255,255, 159,255,247, 255,223,175, 191,191,191, 0,119,239, 231,0,95, 0,151,63, 143,0,119, 167,0,0, 0,63,23]; // Colors.
 var bgcolors = [255,255,255, 223,223,223, 191,191,191, 127,127,127, 63,63,63, 0,0,0]; // Background colors.
@@ -321,62 +319,62 @@ async function appLoad() {
 	}
 }
 
-// Init.
-async function appInit() {
-
-	// Load pixels to canvas.
-	if (frameselecting != frame) {
-		frameselecting = frame;
-		if (frameselecting >= 0 && buffers[frame]) {
-			for (let j = 0; j < maxheight; j++) {
-				pixels[j] = [];
-			}
-			if (buffers[frame][0] == 0) {
-				width = buffers[frame][0 + 1] >= 0 && buffers[frame][0 + 1] <= maxwidth ? buffers[frame][0 + 1] : 7;
-				height = buffers[frame][0 + 2] >= 0 && buffers[frame][0 + 2] <= maxheight ? buffers[frame][0 + 2] : 7;
-				xoffset = picoDiv(maxwidth - width, 2);
-				yoffset = picoDiv(maxheight - height, 2);
-			}
-			for (let n = 3; n < buffers[frame].length; n += 3) {
-				if (buffers[frame][n + 3] == 0) {
-					let imax = buffers[frame][n + 1] + buffers[frame][n + 4] + xoffset;
-					let jmax = buffers[frame][n + 2] + buffers[frame][n + 5] + yoffset;
-					//console.log("Put pixel: " + "->" + imax + "," + jmax);
-					for (let i = buffers[frame][n + 1] + xoffset; i <= imax; i++) {
-						for (let j = buffers[frame][n + 2] + yoffset; j <= jmax; j++) {
-							//console.log("Put pixel: " + i + "," + j);
-							if (i >= xoffset && i < xoffset + width && j >= yoffset && j < yoffset + height) {
-								pixels[j][i] = buffers[frame][n];
-							}
-						}
-					}
-					n += 3;
-				} else {
-					let i = buffers[frame][n + 1] + xoffset;
-					let j = buffers[frame][n + 2] + yoffset;
-					if (i >= xoffset && i < xoffset + width && j >= yoffset && j < yoffset + height) {
-						pixels[j][i] = buffers[frame][n];
-					}
-				}
-			}
-		} else {
-			for (let j = 0; j < maxheight; j++) {
-				pixels[j] = [];
-				for (let i = 0; i < maxwidth; i++) {
-					pixels[j][i] = 0;
-				}
-			}
-		}
-		console.log("Load pixel: " + pixels);
-	}
-	appUpdate();
-
-	// Reset playing count.
-	playing = 1;
-}
-
 // Main.
 async function appMain() {
+
+	// Initialize.
+	if (playing <= 0) {
+
+		// Load pixels to canvas.
+		if (frameselecting != frame) {
+			frameselecting = frame;
+			if (frameselecting >= 0 && buffers[frame]) {
+				for (let j = 0; j < maxheight; j++) {
+					pixels[j] = [];
+				}
+				if (buffers[frame][0] == 0) {
+					width = buffers[frame][0 + 1] >= 0 && buffers[frame][0 + 1] <= maxwidth ? buffers[frame][0 + 1] : 7;
+					height = buffers[frame][0 + 2] >= 0 && buffers[frame][0 + 2] <= maxheight ? buffers[frame][0 + 2] : 7;
+					xoffset = picoDiv(maxwidth - width, 2);
+					yoffset = picoDiv(maxheight - height, 2);
+				}
+				for (let n = 3; n < buffers[frame].length; n += 3) {
+					if (buffers[frame][n + 3] == 0) {
+						let imax = buffers[frame][n + 1] + buffers[frame][n + 4] + xoffset;
+						let jmax = buffers[frame][n + 2] + buffers[frame][n + 5] + yoffset;
+						//console.log("Put pixel: " + "->" + imax + "," + jmax);
+						for (let i = buffers[frame][n + 1] + xoffset; i <= imax; i++) {
+							for (let j = buffers[frame][n + 2] + yoffset; j <= jmax; j++) {
+								//console.log("Put pixel: " + i + "," + j);
+								if (i >= xoffset && i < xoffset + width && j >= yoffset && j < yoffset + height) {
+									pixels[j][i] = buffers[frame][n];
+								}
+							}
+						}
+						n += 3;
+					} else {
+						let i = buffers[frame][n + 1] + xoffset;
+						let j = buffers[frame][n + 2] + yoffset;
+						if (i >= xoffset && i < xoffset + width && j >= yoffset && j < yoffset + height) {
+							pixels[j][i] = buffers[frame][n];
+						}
+					}
+				}
+			} else {
+				for (let j = 0; j < maxheight; j++) {
+					pixels[j] = [];
+					for (let i = 0; i < maxwidth; i++) {
+						pixels[j][i] = 0;
+					}
+				}
+			}
+			console.log("Load pixel: " + pixels);
+		}
+		appUpdate();
+
+		// Reset playing count.
+		playing = 1;
+	}
 
 	// Set touching state to avoid touching another area continuously.
 	if (picoAction()) {

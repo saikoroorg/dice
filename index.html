@@ -12,7 +12,7 @@
 <div id="container">
 	<h1 id="header">
 		<div class="logo">
-			<a id="title" href="./index.html"></a>
+			<a id="title" href="javascript:picoOnTitle();">
 			<a id="subtitle" href="javascript:top.location.reload();"></a>
 		</div>
 		<div class="menu center">
@@ -42,8 +42,18 @@
 <script src="picod.js"></script>
 <script src="pico.js"></script>
 <!--Event--><script>
+pico.apptitle = ""; // App title.
 pico.appurl = null; // Referenced url.
 pico.appver = 0; // App version.
+
+// On title label.
+async function picoOnTitle() {
+	picoResetParams();
+	if (pico.appver > 0) {
+		picoSetStrings(pico.appver, "v");
+	}
+	await picoReload("./index.html");
+}
 
 // On acction button.
 async function picoOnAction() {
@@ -59,6 +69,7 @@ async function picoOnAction() {
 		}
 	} else if (r < 0) {
 		picoSetStrings("./index.html", "u");
+		picoSetStrings(pico.apptitle, "t");
 		await picoReload("pico.html");
 	}
 }
@@ -73,36 +84,33 @@ async function picoOnSelect(x) {
 		await picoShare();
 	} else if (r < 0) {
 		picoSetStrings("./index.html", "u");
+		picoSetStrings(pico.apptitle, "t");
 		await picoReload("pico.html");
 	}
 }
 
 // On main loop.
 async function picoOnMain() {
-	pico.appurl = picoStrings("u");
-	if (pico.appurl) {
-		picoLabel("title");
+	let title = picoStrings("t");
+	if (title) {
+		pico.apptitle = title;
+		picoTitle(pico.apptitle);
 		picoLabel("subtitle");
 	}
+	pico.appurl = picoStrings("u");
 	pico.appver = picoStrings("v");
 	await appLoad();
+	picoFlush(); // Flush to skip first read.
 	for (;;) {
-		await appInit();
-		picoFlush(); // Flush to skip first read.
-		for (;;) {
-			await picoRead();
-			picoClear();
-			let r = await appMain();
-			await picoFlip(0);
-			if (r <= 0) {
-				break;
-			}
-		}
+		await picoRead();
+		picoClear();
+		await appMain();
+		await picoFlip(0);
 	}
 }
 
 // Update title.
-function picoTitle(text=null) {
+function picoTitle(text=null, subtext=null) {
 	let e = document.getElementsByTagName("title");
 	if (e && e[0]) {
 		if (text) {
@@ -113,7 +121,13 @@ function picoTitle(text=null) {
 			e[0].innerText = "";
 		}
 	}
-	picoLabel("title", text);
+	if (text) {
+		pico.apptitle = text;
+		picoLabel("title", text);
+	}
+	if (subtext) {
+		picoLabel("subtitle", subtext)
+	}
 }
 
 // Update label.

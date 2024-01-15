@@ -217,42 +217,43 @@ var scale = 0; // Rolling scale.
 var randoms = []; // Result number.
 var number = 0; // Rolled number.
 
-// Init.
-async function appInit() {
-
-	// Sprite lines and rows.
-	const colMax = 5;//picoSqrt(count - 1) + 1;
-	let row = picoDiv(count - 1, colMax) + 1; // Row count.
-	let col = picoDiv(count - 1, row) + 1; // Column count.
-	let colMod = picoMod(count - 1, col) + 1; // Extra column count.
-
-	const size = 200;
-	for (let i = 0; i < count; i++) {
-		let x = picoMod(i, col) + 1, y = picoDiv(i, col) + 1;
-		if (y < row) {
-			posx[i] = (x / (col + 1) - 0.5) * size;
-			posy[i] = (y / (row + 1) - 0.5) * size;
-		} else {
-			posx[i] = (x / (colMod + 1) - 0.5) * size;
-			posy[i] = (y / (row + 1) - 0.5) * size;
-		}
-		//console.log("" + x + "," + y + " -> " + posx[i] + "," + posy[i]);
-	}
-
-	// Sprite scale.
-	let c0 = count < 1 ? 1 : count < col ? count : row >= col ? row : col;
-	scale = 20 / (c0 + 1);
-
-	// Rolling dice.
-	result = 0;
-
-	// Reset playing count.
-	playing = 1;
-}
-
 // Main.
 async function appMain() {
 
+	// Initialize.
+	if (playing <= 0) {
+
+		// Sprite lines and rows.
+		const colMax = 5;//picoSqrt(count - 1) + 1;
+		let row = picoDiv(count - 1, colMax) + 1; // Row count.
+		let col = picoDiv(count - 1, row) + 1; // Column count.
+		let colMod = picoMod(count - 1, col) + 1; // Extra column count.
+
+		const size = 200;
+		for (let i = 0; i < count; i++) {
+			let x = picoMod(i, col) + 1, y = picoDiv(i, col) + 1;
+			if (y < row) {
+				posx[i] = (x / (col + 1) - 0.5) * size;
+				posy[i] = (y / (row + 1) - 0.5) * size;
+			} else {
+				posx[i] = (x / (colMod + 1) - 0.5) * size;
+				posy[i] = (y / (row + 1) - 0.5) * size;
+			}
+			//console.log("" + x + "," + y + " -> " + posx[i] + "," + posy[i]);
+		}
+
+		// Sprite scale.
+		let c0 = count < 1 ? 1 : count < col ? count : row >= col ? row : col;
+		scale = 20 / (c0 + 1);
+
+		// Rolling dice.
+		result = 0;
+
+		// Reset playing count.
+		playing = 1;
+	}
+
+	// Update rolling dice.
 	if (!custom) {
 		if (result > 0) {
 
@@ -408,5 +409,5 @@ async function appMain() {
 	}
 
 	// Increment playing count.
-	return playing++;
+	playing++;
 };
