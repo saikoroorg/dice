@@ -74,6 +74,21 @@ async function picoOnAction() {
 	}
 }
 
+// On select button.
+async function picoOnSelect(x) {
+	let r = await appSelect(x);
+	if (pico.appver > 0) {
+		picoSetStrings(pico.appver, "v");
+	}
+	if (r > 0) {
+		await picoShare();
+	} else if (r < 0) {
+		picoSetStrings("./index.html", "u");
+		picoSetStrings(pico.apptitle, "t");
+		await picoReload("pico.html");
+	}
+}
+
 // On main loop.
 async function picoOnMain() {
 	let title = picoStrings("t");
