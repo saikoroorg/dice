@@ -1,164 +1,10 @@
-<html>
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1" />
-<title></title>
-<link rel="icon" type="image/svg" href="icon.svg" />
-<link rel="apple-touch-icon" href="icon.png" sizes="192x192" />
-<link rel="manifest" href="app.json" />
-<link rel="stylesheet" href="pico.css" />
-</head>
-<body>
-<div id="container">
-	<h1 id="header">
-		<div class="logo">
-			<a id="title" href="javascript:picoOnTitle();">
-			<a id="subtitle" href="javascript:top.location.reload();"></a>
-		</div>
-		<div class="menu center">
-			<a class="item light secret" id="action" href="javascript:picoOnAction();">
-				<span id="actionText"></span>
-				<img class="icon" id="actionIcon" src="" />
-			</a>
-		</div>
-		<div class="menu">
-			<a class="item clear" id="minus" href="javascript:picoOnSelect(-1);">-</a>
-			<a class="item light" id="select" href="javascript:picoOnSelect(0);">
-				<span id="selectText"></span>
-				<img class="icon" id="selectIcon" src="" />
-			</a>
-			<a class="item clear" id="plus" href="javascript:picoOnSelect(+1);">+</a>
-		</div>
-	</h1>
-	<div id="contents">
-		<div id="screen" class="picoImage picoTouch"></div>
-	</div>
-</div>
-<h6 id="footer">
-	<div id="author"></div>/
-	<div id="version"></div>
-</h6>
-<script>console.log = () => {};</script>
-<script src="picod.js"></script>
-<script src="pico.js"></script>
-<!--Event--><script>
-pico.apptitle = ""; // App title.
-pico.appurl = null; // Referenced url.
-pico.appver = 0; // App version.
-
-// On title label.
-async function picoOnTitle() {
-	picoResetParams();
-	if (pico.appver > 0) {
-		picoSetStrings(pico.appver, "v");
-	}
-	await picoReload("./index.html");
-}
-
-// On acction button.
-async function picoOnAction() {
-	let r = await appAction();
-	if (pico.appver > 0) {
-		picoSetStrings(pico.appver, "v");
-	}
-	if (r > 0) {
-		if (pico.appurl) {
-			await picoReload(pico.appurl);
-		} else {
-			await picoShare();
-		}
-	} else if (r < 0) {
-		picoSetStrings("./index.html", "u");
-		picoSetStrings(pico.apptitle, "t");
-		await picoReload("pico.html");
-	}
-}
-
-// On select button.
-async function picoOnSelect(x) {
-	let r = await appSelect(x);
-	if (pico.appver > 0) {
-		picoSetStrings(pico.appver, "v");
-	}
-	if (r > 0) {
-		await picoShare();
-	} else if (r < 0) {
-		picoSetStrings("./index.html", "u");
-		picoSetStrings(pico.apptitle, "t");
-		await picoReload("pico.html");
-	}
-}
-
-// On main loop.
-async function picoOnMain() {
-	let title = picoStrings("t");
-	if (title) {
-		pico.apptitle = title;
-		picoTitle(pico.apptitle);
-	}
-	pico.appurl = picoStrings("u");
-	pico.appver = picoStrings("v");
-	await appLoad();
-	picoFlush(); // Flush to skip first read.
-	for (;;) {
-		await picoRead();
-		picoClear();
-		await appMain();
-		await picoFlip(0);
-	}
-}
-
-// Update title.
-function picoTitle(text=null, subtext=null) {
-	let e = document.getElementsByTagName("title");
-	if (e && e[0]) {
-		if (text) {
-			e[0].style.display = "flex";
-			e[0].innerText = text;
-		} else {
-			e[0].style.display = "none";
-			e[0].innerText = "";
-		}
-	}
-	if (text) {
-		pico.apptitle = text;
-		picoLabel("title", text);
-	}
-	if (subtext) {
-		picoLabel("subtitle", subtext)
-	}
-}
-
-// Update label.
-function picoLabel(id, text=null, icon=null) {
-	let e = document.getElementById(id);
-	if (e) {
-		e.style.display = (text || icon) ? "flex" : "none";
-		let e1 = document.getElementById(id + "Text");
-		let e2 = document.getElementById(id + "Icon");
-		if (e1 && text) {
-			e1.style.display = "flex";
-			e1.innerText = text;
-			if (e2 && !icon) {
-				e2.style.display = "none";
-			}
-		} else if (e2 && icon) {
-			e2.style.display = "flex";
-			e2.src = icon;
-			if (e1 && !text) {
-				e1.style.display = "none";
-			}
-		} else if (text) {
-			e.innerText = text;
-		}
-	}
-	picoFlush();
-}
-
-</script><!--/Event-->
-<!--Main--><script>
 picoTitle("Pico", "Edit"); // Title.
 
+// Data and settings.
+var colors = [255,255,255, 159,255,247, 255,223,175, 191,191,191, 0,119,239, 231,0,95, 0,151,63, 143,0,119, 167,0,0, 0,63,23]; // Colors.
+var bgcolors = [255,255,255, 223,223,223, 191,191,191, 127,127,127, 63,63,63, 0,0,0]; // Background colors.
+
+// Global variables.
 var maxwidth = 20, maxheight = 20; // Canvas max size.
 var width = 7, height = 7; // Canvas size.
 var xoffset = picoDiv(maxwidth - width, 2); // Pixels x-index offset.
@@ -170,8 +16,6 @@ var buffers = []; // Pixels buffers.
 var animeflag = 0; // Anime editing flag.
 var playing = 0; // Playing count.
 var pixels = []; // Canvas pixels.
-var colors = [255,255,255, 159,255,247, 255,223,175, 191,191,191, 0,119,239, 231,0,95, 0,151,63, 143,0,119, 167,0,0, 0,63,23]; // Colors.
-var bgcolors = [255,255,255, 223,223,223, 191,191,191, 127,127,127, 63,63,63, 0,0,0]; // Background colors.
 var depth = 10; // Color count.
 const maxcolor = 10; // Color max size.
 var colorflag = 0; // Color editing flag.
@@ -214,6 +58,8 @@ async function appUpdate(force = true) {
 	} else {
 		picoLabel("select", "x" + width);
 	}
+	picoLabel("minus", "-");
+	picoLabel("plus", "+");
 }
 
 // Action button.
@@ -232,13 +78,12 @@ async function appAction() {
 		picoSetCode6([0,7,7], k);
 		k++
 	}
-	if (
-		((colors[0] == 255 && colors[1] == 255 && colors[2] == 255) ||
+	if (((colors[0] == 255 && colors[1] == 255 && colors[2] == 255) ||
 		(colors[0] == 0 && colors[1] == 0 && colors[2] == 0))) {
 		picoSetCode8(colors, k);
 	}
 
-	return 1; // Return 1 to share.
+	await picoSwitch(); // Share or back.
 }
 
 // Select button.
@@ -278,8 +123,6 @@ function appSelect(x) {
 
 	picoBeep(1.2, 0.1);	
 	picoFlush();
-
-	return 0; // Do nothing.
 }
 
 // Touching flags and states.
@@ -783,10 +626,5 @@ async function appMain() {
 	}
 
 	// Increment playing count.
-	return playing++;
+	playing++;
 }
-
-picoOnMain();
-</script><!--/Main-->
-</body>
-</html>

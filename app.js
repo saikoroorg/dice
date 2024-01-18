@@ -1,5 +1,7 @@
 picoTitle("Dice"); // Title.
 
+// Data and settings.
+const editjs = "app/edit.js"; // Editor script.
 const dots = [ // Dotted design pixels.
 	[0,7,7, 9,3,3],
 	[0,7,7, 9,1,5, 9,5,1],
@@ -34,6 +36,8 @@ const nums = [ // Numbered design pixels.
 	[0,7,7, 9,1,1,0,0,4, 9,3,1,0,2,0, 9,3,1,0,0,2, 9,5,1,0,0,4, 9,3,3,0,2,0, 9,3,5,0,2,0], // 19
 	[0,7,7, 9,0,1,0,2,0, 9,2,1,0,0,2, 9,0,3,0,2,0, 9,0,3,0,0,2, 9,0,5,0,2,0, 9,4,1,0,1,0, 9,4,1,0,0,4, 9,6,1,0,0,4, 9,4,5,0,2,0], // 20
 ];
+
+// Global variables.
 var colors = [255,255,255, 0,0,0]; // Original design colors.
 var pixels = []; // Original design pixels.
 var count = 1; // Count of dice.
@@ -70,6 +74,8 @@ async function appUpdate() {
 	} else {
 		picoLabel("select", "?");
 	}
+	picoLabel("minus", "-");
+	picoLabel("plus", "+");
 }
 
 // Action button.
@@ -101,7 +107,7 @@ async function appAction() {
 		}
 
 		// Enter to edit mode.
-		return -1; // Return -1 to edit.
+		await picoSwitch(editjs); // Open editor.
 
 	// Start sharing.
 	} else if (result > 0) {
@@ -115,10 +121,8 @@ async function appAction() {
 		picoSetCode8(colors, key + 1);
 
 		// Start sharing.
-		return 1; // Return 1 to share.
+		await picoSwitch();
 	}
-
-	return 0; // Do nothing.
 }
 
 // Select button.
@@ -164,8 +168,6 @@ async function appSelect(x) {
 		picoBeep(1.2, 0.1);
 		appUpdate();
 	}
-
-	return 0; // Do nothing.
 }
 
 // Load.
@@ -216,35 +218,54 @@ var angle = 0; // Rolling angle.
 var scale = 0; // Rolling scale.
 var randoms = []; // Result number.
 var number = 0; // Rolled number.
+var landscape = false; // landscape mode.
+
+// Resize.
+async function appResize() {
+	landscape = picoWidescreen();
+
+	// Set sprite lines and rows.
+	const colMax = 5;//picoSqrt(count - 1) + 1;
+	let row = picoDiv(count - 1, colMax) + 1; // Row count.
+	let col = picoDiv(count - 1, row) + 1; // Column count.
+	let colMod = picoMod(count - 1, col) + 1; // Extra column count.
+
+	const width = 200, height = 150;
+	for (let i = 0; i < count; i++) {
+		let x = picoMod(i, col) + 1, y = picoDiv(i, col) + 1;
+		if (landscape) {
+			if (y < row) {
+				posx[i] = (x / (col + 1) - 0.5) * width;
+				posy[i] = (y / (row + 1) - 0.5) * height;
+			} else {
+				posx[i] = (x / (colMod + 1) - 0.5) * width;
+				posy[i] = (y / (row + 1) - 0.5) * height;
+			}
+		} else {
+			if (y < row) {
+				posy[i] = (x / (col + 1) - 0.5) * width;
+				posx[i] = (y / (row + 1) - 0.5) * height;
+			} else {
+				posy[i] = (x / (colMod + 1) - 0.5) * width;
+				posx[i] = (y / (row + 1) - 0.5) * height;
+			}
+		}
+		//console.log("" + x + "," + y + " -> " + posx[i] + "," + posy[i]);
+	}
+
+	// Sprite scale.
+	let c0 = count < 1 ? 1 : count < col ? count : row >= col ? row : col;
+	scale = 20 / (c0 + 1);
+
+	picoFlush();
+}
 
 // Main.
 async function appMain() {
 
 	// Initialize.
 	if (playing <= 0) {
-
-		// Sprite lines and rows.
-		const colMax = 5;//picoSqrt(count - 1) + 1;
-		let row = picoDiv(count - 1, colMax) + 1; // Row count.
-		let col = picoDiv(count - 1, row) + 1; // Column count.
-		let colMod = picoMod(count - 1, col) + 1; // Extra column count.
-
-		const size = 200;
-		for (let i = 0; i < count; i++) {
-			let x = picoMod(i, col) + 1, y = picoDiv(i, col) + 1;
-			if (y < row) {
-				posx[i] = (x / (col + 1) - 0.5) * size;
-				posy[i] = (y / (row + 1) - 0.5) * size;
-			} else {
-				posx[i] = (x / (colMod + 1) - 0.5) * size;
-				posy[i] = (y / (row + 1) - 0.5) * size;
-			}
-			//console.log("" + x + "," + y + " -> " + posx[i] + "," + posy[i]);
-		}
-
-		// Sprite scale.
-		let c0 = count < 1 ? 1 : count < col ? count : row >= col ? row : col;
-		scale = 20 / (c0 + 1);
+		appResize();
 
 		// Rolling dice.
 		result = 0;
@@ -375,7 +396,7 @@ async function appMain() {
 
 		// Draw number sprite.
 		let n = result <= 0 ? number : number - 1;
-		picoChar(n, 0, 0, -80);
+		picoChar(n, 0, 0, landscape ? -50 : -80);
 
 		let s = playing < 5 ? scale * (0.8 + 0.04 * playing) : scale;
 
