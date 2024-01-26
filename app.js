@@ -36,9 +36,13 @@ const nums = [ // Numbered design pixels.
 	[0,7,7, 9,1,1,0,0,4, 9,3,1,0,2,0, 9,3,1,0,0,2, 9,5,1,0,0,4, 9,3,3,0,2,0, 9,3,5,0,2,0], // 19
 	[0,7,7, 9,0,1,0,2,0, 9,2,1,0,0,2, 9,0,3,0,2,0, 9,0,3,0,0,2, 9,0,5,0,2,0, 9,4,1,0,1,0, 9,4,1,0,0,4, 9,6,1,0,0,4, 9,4,5,0,2,0], // 20
 ];
+const kcents = [-1.0,
+	-0.9,-0.7,-0.5, -0.4,-0.2, 0.0, 0.2, // 1:Do,2:Re,3:Mi, 4:Fa,5:So,6:La,7:Ti
+	 0.3, 0.5, 0.7,  0.8, 1.0, 1.2, 1.4,
+	 1.5, 1.7, 1.9,  2.0, 2.2];
+var subcolors = [255,255,255, 223,223,223, 191,191,191, 127,127,127, 63,63,63, 0,0,0]; // Count colors.
 
 // Global variables.
-var subcolors = [255,255,255, 223,223,223, 191,191,191, 127,127,127, 63,63,63, 0,0,0]; // Count colors.
 var colors = [255,255,255, 0,0,0]; // Original design colors.
 var pixels = []; // Original design pixels.
 var count = 1; // Count of dice.
@@ -199,16 +203,18 @@ var landscape = false; // landscape mode.
 async function appResize() {
 	landscape = picoWidescreen();
 
-	// Set sprite lines and rows.
-	const colMax = 5;//picoSqrt(count - 1) + 1;
-	let row = picoDiv(count - 1, colMax) + 1; // Row count.
-	let col = picoDiv(count - 1, row) + 1; // Column count.
-	let colMod = picoMod(count - 1, col) + 1; // Extra column count.
+	// Set sprite positions and scale for landscape mode.
+	if (landscape) {
 
-	const width = 200, height = 150;
-	for (let i = 0; i < count; i++) {
-		let x = picoMod(i, col) + 1, y = picoDiv(i, col) + 1;
-		if (landscape) {
+		// Parameters for landscape mode.
+		const width = 180, height = 90, colMax = 8;
+
+		// Set sprite positions for landscape mode.
+		let row = picoDiv(count - 1, colMax) + 1; // Row count.
+		let col = picoDiv(count - 1, row) + 1; // Column count.
+		let colMod = picoMod(count - 1, col) + 1; // Extra column count.
+		for (let i = 0; i < count; i++) {
+			let x = picoMod(i, col) + 1, y = picoDiv(i, col) + 1;
 			if (y < row) {
 				posx[i] = (x / (col + 1) - 0.5) * width;
 				posy[i] = (y / (row + 1) - 0.5) * height;
@@ -216,21 +222,37 @@ async function appResize() {
 				posx[i] = (x / (colMod + 1) - 0.5) * width;
 				posy[i] = (y / (row + 1) - 0.5) * height;
 			}
-		} else {
-			if (y < row) {
-				posy[i] = (x / (col + 1) - 0.5) * width;
-				posx[i] = (y / (row + 1) - 0.5) * height;
+		}
+
+		// Set sprite scale for landscape mode.
+		let c = count < col ? count : col;
+		scale = 18 / (c + 1);
+
+	// Set sprite positions and scale for portrait mode.
+	} else {
+
+		// Parameters for portrait mode.
+		const width = 150, height = 150, rowMax = 5;
+
+		// Set sprite positions for portrait mode.
+		let col = picoDiv(count - 1, rowMax) + 1; // Column count.
+		let row = picoDiv(count - 1, col) + 1; // Row count.
+		let rowMod = picoMod(count - 1, row) + 1; // Extra row count.
+		for (let i = 0; i < count; i++) {
+			let y = picoMod(i, row) + 1, x = picoDiv(i, row) + 1;
+			if (x < col) {
+				posx[i] = (x / (col + 1) - 0.5) * width;
+				posy[i] = (y / (row + 1) - 0.5) * height;
 			} else {
-				posy[i] = (x / (colMod + 1) - 0.5) * width;
-				posx[i] = (y / (row + 1) - 0.5) * height;
+				posx[i] = (x / (col + 1) - 0.5) * width;
+				posy[i] = (y / (rowMod + 1) - 0.5) * height;
 			}
 		}
-		//console.log("" + x + "," + y + " -> " + posx[i] + "," + posy[i]);
-	}
 
-	// Sprite scale.
-	let c0 = count < 1 ? 1 : count < col ? count : row >= col ? row : col;
-	scale = 20 / (c0 + 1);
+		// Set sprite scale for portrait mode.
+		let c = count < row ? count : row;
+		scale = 18 / (c + 1);
+	}
 
 	picoFlush();
 }
@@ -274,20 +296,16 @@ async function appMain() {
 
 			// Timeout and show result.
 			} else if (playing > 60) {
-				result = picoSeed(); // Set result seed.
 				for (let i = 0; i < count; i++) {
 					randoms[i] = picoRandom(maximum);
+					result += randoms[i] + 1;
 				}
 				angle = 0;
 				playing = 1;
 				appUpdate();
 
 				// Number matched beeps on show result.
-				const kcents = [-1.0,
-					-0.9,-0.7,-0.5, -0.4,-0.2, 0.0, 0.2, // 1:Do,2:Re,3:Mi, 4:Fa,5:So,6:La,7:Ti
-					 0.3, 0.5, 0.7,  0.8, 1.0, 1.2, 1.4,
-					 1.5, 1.7, 1.9,  2.0, 2.2];
-				const timing = count <= 2 ? 0.2 : 0.5/count;
+				let timing = count <= 2 ? 0.2 : 0.5/count;
 				for (let i = 0; i < count; i++) {
 					let k = randoms[i] < 10 ? randoms[i] : randoms[i] - 10;
 					let j = k >= 0 && k < kcents.length ? k : 0;
@@ -344,13 +362,16 @@ async function appMain() {
 	} else {
 
 		// Draw seed count.
-		let x0 = 0, y0 = landscape ? -50 : -90, c0 = 2, s0 = 1;
-		picoColor(subcolors);
-		picoChar(seed, c0, x0, y0, 0, s0);
+		if (result > 0) {
+			picoColor(subcolors);
+			picoChar(result, -1, 0,landscape?-50:-85, 0,2);
+			picoChar(seed, 2, 0,landscape?-40:-75, 0,1);
+		}
 
 		// Set color for sprite.
 		picoColor(colors);
 
+		// Scale for sprite.
 		let s = playing < 5 ? scale * (0.8 + 0.04 * playing) : scale;
 
 		// Draw original design sprite.

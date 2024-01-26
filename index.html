@@ -96,7 +96,7 @@ pico.App = class {
 		this.title = ""; // App title.
 		this.ver = 0; // Protocol version.
 		this.author = "*"; // App author.
-		this.idver = ""; // App identifier and version.
+		this.name = ""; // App name.
 
 		// Load app version.
 		let e = document.getElementById("author");
@@ -112,16 +112,16 @@ pico.App = class {
 		}
 		e = document.getElementById("version");
 		if (e && e.innerText) {
-			this.idver = e.innerText;
+			this.name = e.innerText.replace(/[\?\#].*$/, "");
 		} else {
 			if (window.location.pathname) {
-				this.idver = window.location.pathname.replace(/[\?\#].*$/, "");
-				if (this.idver.length > 32) {
-					this.idver = ".." + this.idver.slice(-30);
+				this.name = window.location.pathname.replace(/[\?\#].*$/, "");
+				if (this.name.length > 32) {
+					this.name = ".." + this.name.slice(-30);
 				}
 			}
 			if (e) {
-				e.innerText = this.idver;
+				e.innerText = this.name;
 			}
 		}
 
@@ -317,7 +317,7 @@ pico.App = class {
 			bgcolors = [223,223,223, 255,255,255];
 		}
 		if (watermark == null) {
-			watermark = this.author + "/" + this.idver.replace(/[\?\#].*$/, "+");
+			watermark = this.author + "/" + this.name;
 		}
 		let file = await picoScreenFile(bgcolors, watermark);
 		let files = [file];
