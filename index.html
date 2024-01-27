@@ -115,7 +115,7 @@ pico.App = class {
 			this.name = e.innerText.replace(/[\?\#].*$/, "");
 		} else {
 			if (window.location.pathname) {
-				this.name = window.location.pathname.replace(/[\?\#].*$/, "");
+				this.name = window.location.pathname.replace(/(^\/|[\?\#].*$|\/$)/g, "");
 				if (this.name.length > 32) {
 					this.name = ".." + this.name.slice(-30);
 				}
@@ -308,7 +308,7 @@ pico.App = class {
 		}
 
 		// True if landscape mode.
-		return window.matchMedia("(min-aspect-ratio: 0.8)").matches;
+		return window.matchMedia("(min-aspect-ratio: 1.0)").matches;
 	}
 
 	// Share screen image.
