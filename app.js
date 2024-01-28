@@ -327,13 +327,15 @@ async function appMain() {
 	// Clear screen.
 	picoClear();
 
+	// Draw parameters.
+	picoColor(subcolors);
+	if (pixels.length <= 0) {
+		let param = "" + count + "d" + maximum;
+		await picoChar(param, -1, 0,landscape?-50:-85, 0,2);
+	}
+
 	// Draw customizing dice.
 	if (custom) {
-
-		// Draw maximum count.
-		let x0 = 0, y0 = 50, c0 = -1, s0 = 2;
-		picoColor(subcolors);
-		await picoChar("*" + count, c0, x0, y0, 0, s0);
 
 		// Draw icon.
 		let x1 = 0, y1 = 0, s1 = 10, w1 = 32;
@@ -362,13 +364,8 @@ async function appMain() {
 	// Draw rolling dice.
 	} else {
 
-		// Draw result.
+		// Draw random seed.
 		if (result > 0) {
-			picoColor(subcolors);
-			if (pixels.length <= 0) {
-				let param = "" + count + "d" + maximum;
-				await picoChar(param, -1, 0,landscape?-50:-85, 0,2);
-			}
 			await picoChar(seed, 0, 0,landscape?-40:-75, 0,1);
 		}
 
