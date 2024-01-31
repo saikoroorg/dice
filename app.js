@@ -53,7 +53,6 @@ var custom = false; // Custom flag.
 var playing = 0; // Playing count.
 var seed = 0; // Random seed.
 var result = 0; // Result.
-var sharing = 0; // Sharing flag.
 
 // Update buttons.
 async function appUpdate() {
@@ -65,13 +64,13 @@ async function appUpdate() {
 		picoLabel("action");
 	}
 	if (pixels.length > 0) {
-		let data = await await picoSpriteData(pixels[maximum - 1], colors);
+		let data = await picoSpriteData(pixels[maximum - 1], colors);
 		picoLabel("select", null, data);
 	} else if (maximum <= 9) {
-		let data = await await picoSpriteData(dots[maximum - 1], colors);
+		let data = await picoSpriteData(dots[maximum - 1], colors);
 		picoLabel("select", null, data);
 	} else if (maximum <= maxmaximum) {
-		let data = await await picoSpriteData(nums[maximum], colors);
+		let data = await picoSpriteData(nums[maximum], colors);
 		picoLabel("select", null, data);
 	} else {
 		picoLabel("select", "?");
@@ -111,11 +110,11 @@ async function appAction() {
 		}
 
 		// Enter to edit mode.
-		await picoSwitch(editjs); // Open editor.
+		picoSwitch(editjs); // Open editor.
 
 	// Share screen.
 	} else if (result > 0) {
-		sharing = 1;
+		picoShareScreen(); // Start sharing screen.
 	}
 }
 
@@ -283,7 +282,7 @@ async function appMain() {
 
 				// Reset playing count.
 				playing = -1;
-				//appUpdate();
+				appUpdate();
 			}
 
 		} else {
@@ -325,7 +324,7 @@ async function appMain() {
 	picoColor(subcolors);
 	if (pixels.length <= 0) {
 		let param = "" + count + "d" + maximum;
-		await picoChar(param, -1, 0,landscape?-50:-85, 0,2);
+		picoChar(param, -1, 0,landscape?-50:-85, 0,2);
 	}
 
 	// Draw customizing dice.
@@ -346,13 +345,13 @@ async function appMain() {
 		picoColor(colors);
 		if (pixels.length > 0) {
 			s1 = s1 * 7 / picoSpriteSize(pixels[maximum - 1]);
-			await picoSprite(pixels[maximum - 1], 0, x1, y1, 0, s1);
+			picoSprite(pixels[maximum - 1], 0, x1, y1, 0, s1);
 
 		// Draw dotted design sprite.	
 		} else if (maximum <= 9) {
-			await picoSprite(dots[maximum - 1], 0, x1, y1, 0, s1);
+			picoSprite(dots[maximum - 1], 0, x1, y1, 0, s1);
 		} else if (maximum <= maxmaximum) {
-			await picoSprite(nums[maximum], 0, x1, y1, 0, s1);
+			picoSprite(nums[maximum], 0, x1, y1, 0, s1);
 		}
 
 	// Draw rolling dice.
@@ -360,7 +359,7 @@ async function appMain() {
 
 		// Draw random seed.
 		if (result > 0) {
-			await picoChar(seed, 0, 0,landscape?-40:-75, 0,1);
+			picoChar(seed, 0, 0,landscape?-40:-75, 0,1);
 		}
 
 		// Set color for sprite.
@@ -373,27 +372,21 @@ async function appMain() {
 		if (pixels.length > 0) {
 			for (let i = 0; i < count; i++) {
 				let s1 = s * 7 / picoSpriteSize(pixels[randoms[i]]);
-				await picoSprite(pixels[randoms[i]], 0, posx[i], posy[i], angle, s1);
+				picoSprite(pixels[randoms[i]], 0, posx[i], posy[i], angle, s1);
 			}
 
 		// Draw dotted design sprite.
 		} else if (maximum <= 9) {
 			for (let i = 0; i < count; i++) {
-				await picoSprite(dots[randoms[i]], 0, posx[i], posy[i], angle, s);
+				picoSprite(dots[randoms[i]], 0, posx[i], posy[i], angle, s);
 			}
 
 		// Draw numbered design sprite.
 		} else if (maximum <= maxmaximum) {
 			for (let i = 0; i < count; i++) {
-				await picoSprite(nums[randoms[i]], 0, posx[i], posy[i], angle, s);
+				picoSprite(nums[randoms[i]], 0, posx[i], posy[i], angle, s);
 			}
 		}
-	}
-
-	// Start sharing screen.
-	if (sharing) {
-		await picoShareScreen();
-		sharing = 0;
 	}
 
 	// Update animation if rolling.
