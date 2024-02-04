@@ -7,7 +7,7 @@
 
 <!-- qlmanage -t -s 192 -o ./ icon.svg -or- inkscape -z -o icon.png -w 192 -h 192 icon.svg -->
 <!--svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="384" height="384">
-	<path d="M0,0h32v32h-32Z" fill="#DFDFDF"/>
+	<path d="M0,0h32v32h-32Z" fill="#dfdfdf"/>
 	<g stroke="none" transform="translate(15,15)">
 		<path d="M-7,-7h16v16h-16Z" stroke-width="2" stroke="#000" fill="#fff"/>
 		<path d="M -4, -4h2v2h-2Z M  4, -4h2v2h-2Z M -4,  0h2v2h-2Z M  4,  0h2v2h-2Z M -4,  4h2v2h-2Z M  4,  4h2v2h-2Z" fill="#000"/>

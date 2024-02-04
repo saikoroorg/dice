@@ -139,6 +139,13 @@ async function appSelect(x) {
 		custom = true;
 		picoBeep(-1.2, 0.1);
 
+	// Change custom mode.
+	} else if (!custom) {
+		custom = true;
+		picoBeep(1.2, 0.1);
+		appResize(); // Update positions.
+		appUpdate(); // Update buttons.
+
 	// Change maximum of dice faces.
 	} else {
 		custom = true;
