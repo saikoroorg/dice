@@ -58,24 +58,19 @@ async function picoSwitch(script=null) {
 	await pico.app.switchScript(script);
 }
 
+// Lock screen with wakelock.
+function picoLockScreen(enable=true) {
+	pico.app.lockScreen(enable);
+}
+
+// Enable wide screen and return true if landscape mode.
+function picoWideScreen(enable=true) {
+	return pico.app.wideScreen(enable);
+}
+
 // Share screen image.
 async function picoShareScreen(bgcolors=null, watermark=null) {
 	await pico.app.shareScreen(bgcolors, watermark);
-}
-
-// Enable wake lock.
-function picoWakelock() {
-	pico.app.wakelock();
-}
-
-// Enable wide screen and return true if landscape mode.
-function picoWidescreen(enable=true) {
-	return pico.app.widescreen(enable);
-}
-
-// Enable wide screen and return true if landscape mode.
-function picoWidescreen(enable=true) {
-	return pico.app.widescreen(enable);
 }
 
 //************************************************************/
@@ -97,6 +92,8 @@ pico.App = class {
 		this.ver = 0; // Protocol version.
 		this.author = "*"; // App author.
 		this.name = ""; // App name.
+		this.wakeLock = null; // Wake lock object.
+		this.lock = "picoAppLock" + Date.now(); // Lock object identifier.
 
 		// Load app version.
 		let e = document.getElementById("author");
@@ -134,41 +131,49 @@ pico.App = class {
 		e.src = this.script ? this.script : pico.App.script;
 		document.body.appendChild(e);
 
-		window.addEventListener("resize", () => {
-			this.onResize()
+		window.addEventListener("resize", async () => {
+			await this.onResize()
 		}); // Resize.
-		window.addEventListener("load", () => {
-			this.onLoad();
+		window.addEventListener("load", async () => {
+			await this.onLoad();
 		}); // Load.
 	}
 
 	// On reset button.
 	async onReset() {
-		picoResetParams();
-		if (this.ver > 0) {
-			picoSetStrings(this.ver, "v");
-		}
-		await picoReload();
+		await navigator.locks.request(this.lock, async (lock) => {
+			picoResetParams();
+			if (this.ver > 0) {
+				picoSetStrings(this.ver, "v");
+			}
+			await picoReload();
+		}); // end of lock.
 	}
 
 	// On acction button.
 	async onAction() {
 		if (typeof appAction === "function") {
-			await appAction();
+			await navigator.locks.request(this.lock, async (lock) => {
+				await appAction();
+			}); // end of lock.
 		}
 	}
 
 	// On select button.
 	async onSelect(x) {
 		if (typeof appSelect === "function") {
-			await appSelect(x);
+			await navigator.locks.request(this.lock, async (lock) => {
+				await appSelect(x);
+			}); // end of lock.
 		}
 	}
 
 	// On resize event.
 	async onResize() {
 		if (typeof appResize === "function") {
-			await appResize();
+			await navigator.locks.request(this.lock, async (lock) => {
+				await appResize();
+			}); // end of lock.
 		}
 	}
 
@@ -187,14 +192,18 @@ pico.App = class {
 			this.url = picoStrings("u");
 			this.ver = picoStrings("v");
 			if (typeof appLoad === "function") {
-				await appLoad();
+				await navigator.locks.request(this.lock, async (lock) => {
+					await appLoad();
+				}); // end of lock.
 			}
 			picoFlush(); // Flush to skip first read.
 			for (;;) {
 				await picoRead();
-				picoClear();
-				await appMain();
-				await picoFlip(0);
+				await navigator.locks.request(this.lock, async (lock) => {
+					picoClear();
+					await appMain();
+					await picoFlip(0);
+				}); // end of lock.
 			}
 		} catch (error) {
 			console.error(error.name, error.message);
@@ -282,16 +291,22 @@ pico.App = class {
 		}
 	}
 
-	// Enable wake lock.
-	wakelock() {
+	// Lock screen with wakelock.
+	lockScreen(enable=true) {
 		try {
 
 			// Wake lock.
 			// Not work on iOS 16 PWA.
 			// https://bugs.webkit.org/show_bug.cgi?id=254545
 			if (navigator.wakeLock) {
-				console.log("Request wake lock.");
-				navigator.wakeLock.request("screen");
+				if (enable) {
+					console.log("Request wake lock.");
+					this.wakeLock = navigator.wakeLock.request("screen");
+				} else if (this.wakeLock) {
+					console.log("Release wake lock.");
+					this.wakeLock.release();
+					this.wakeLock = null;
+				}
 			} else {
 				console.log("No wake lock.");
 			}
@@ -301,10 +316,10 @@ pico.App = class {
 	}
 
 	// Enable wide screen and return true if landscape mode.
-	widescreen(enable) {
-		let e = document.getElementById(enable ? "screen" : "widescreen");
+	wideScreen(enable) {
+		let e = document.getElementById(enable ? "screen" : "wideScreen");
 		if (e) {
-			e.id = enable ? "widescreen" : "screen";
+			e.id = enable ? "wideScreen" : "screen";
 		}
 
 		// True if landscape mode.

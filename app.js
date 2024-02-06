@@ -206,7 +206,7 @@ var landscape = false; // landscape mode.
 
 // Resize.
 async function appResize() {
-	landscape = picoWidescreen();
+	landscape = picoWideScreen();
 
 	// Set sprite positions and scale for landscape mode.
 	if (landscape) {
