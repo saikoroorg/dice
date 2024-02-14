@@ -40,7 +40,6 @@ const kcents = [-1.0,
 	-0.9,-0.7,-0.5, -0.4,-0.2, 0.0, 0.2, // 1:Do,2:Re,3:Mi, 4:Fa,5:So,6:La,7:Ti
 	 0.3, 0.5, 0.7,  0.8, 1.0, 1.2, 1.4,
 	 1.5, 1.7, 1.9,  2.0, 2.2];
-var subcolors = [255,255,255, 223,223,223, 191,191,191, 127,127,127, 63,63,63, 0,0,0]; // Count colors.
 
 // Global variables.
 var colors = [255,255,255, 0,0,0]; // Original design colors.
@@ -328,7 +327,7 @@ async function appMain() {
 	}
 
 	// Draw parameters.
-	picoColor(subcolors);
+	picoColor();
 	if (pixels.length <= 0) {
 		let param = "" + count + "d" + maximum;
 		picoChar(param, -1, 0,landscape?-50:-85, 0,2);
