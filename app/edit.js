@@ -55,7 +55,7 @@ async function appUpdate(force = true) {
 	if (animeflag) {
 		picoLabel("select", "" + anime);
 	} else {
-		picoLabel("select", "x" + width);
+		picoLabel("select", "*" + width);
 	}
 	picoLabel("minus", "-");
 	picoLabel("plus", "+");
