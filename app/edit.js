@@ -1,10 +1,6 @@
-picoTitle("Pico", "Edit"); // Title.
-
-// Data and settings.
+const title = "Edit"; // Title.
 var colors = [255,255,255, 159,255,247, 255,223,175, 191,191,191, 0,119,239, 231,0,95, 0,151,63, 143,0,119, 167,0,0, 0,63,23]; // Colors.
-
-// Global variables.
-var maxwidth = 20, maxheight = 20; // Canvas max size.
+const maxwidth = 20, maxheight = 20; // Canvas max size.
 var width = 7, height = 7; // Canvas size.
 var xoffset = picoDiv(maxwidth - width, 2); // Pixels x-index offset.
 var yoffset = picoDiv(maxheight - height, 2); // Pixels y-index offset.
@@ -136,6 +132,7 @@ var frameselecting = -1; // Selecting frame index.
 
 // Load.
 async function appLoad() {
+	picoTitle(title);
 
 	// Initialize pixels on max size.
 	for (let j = 0; j < maxheight; j++) {

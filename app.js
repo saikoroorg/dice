@@ -1,6 +1,4 @@
-picoTitle("Dice"); // Title.
-
-// Data and settings.
+const title = "Dice"; // Title.
 const editjs = "app/edit.js"; // Editor script.
 const dots = [ // Dotted design pixels.
 	[0,7,7, 5,3,3],
@@ -40,8 +38,6 @@ const kcents = [-1.0,
 	-0.9,-0.7,-0.5, -0.4,-0.2, 0.0, 0.2, // 1:Do,2:Re,3:Mi, 4:Fa,5:So,6:La,7:Ti
 	 0.3, 0.5, 0.7,  0.8, 1.0, 1.2, 1.4,
 	 1.5, 1.7, 1.9,  2.0, 2.2];
-
-// Global variables.
 var colors = [255,255,255, 0,0,0]; // Original design colors.
 var pixels = []; // Original design pixels.
 var count = 1; // Count of dice.
@@ -159,6 +155,7 @@ async function appSelect(x) {
 
 // Load.
 async function appLoad() {
+	picoTitle(title);
 
 	// Load query params.
 	let keys = picoKeys();
